@@ -1,0 +1,289 @@
+// Assurawy Islamic Media — Database Schema
+// Run `npx prisma migrate dev --name init` after setting DATABASE_URL
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  SHORT_ANSWER
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  phone         String?  // E.164 format, e.g. +2348012345678 — used for WhatsApp notifications
+  passwordHash  String
+  role          Role     @default(STUDENT)
+  bio           String?
+  avatarUrl     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Gamification
+  points          Int       @default(0)
+  currentStreak   Int       @default(0)
+  longestStreak    Int      @default(0)
+  lastActivityAt  DateTime?
+
+  // Teacher relations
+  coursesTaught     Course[]        @relation("TeacherCourses")
+
+  // Student relations
+  enrollments       Enrollment[]
+  quizAttempts      QuizAttempt[]
+  certificates      Certificate[]
+  lessonProgress    LessonProgress[]
+  memorization      MemorizationEntry[]
+  recitations       Recitation[]
+  forumPosts        ForumPost[]
+  forumComments     ForumComment[]
+  announcements     Announcement[]  @relation("AnnouncementAuthor")
+  payments          Payment[]
+  badges            UserBadge[]
+
+  @@index([role])
+}
+
+model Course {
+  id           String    @id @default(cuid())
+  slug         String    @unique
+  title        String
+  description  String
+  level        String    @default("Foundational")
+  thumbnailUrl String?
+  published    Boolean   @default(false)
+  priceKobo    Int       @default(0) // 0 = free course. Nigerian Naira, stored in kobo (₦1 = 100 kobo).
+  teacherId    String
+  teacher      User      @relation("TeacherCourses", fields: [teacherId], references: [id])
+  modules      Module[]
+  enrollments  Enrollment[]
+  payments     Payment[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([teacherId])
+}
+
+model Module {
+  id        String   @id @default(cuid())
+  title     String
+  order     Int
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons   Lesson[]
+
+  @@index([courseId])
+}
+
+model Lesson {
+  id          String   @id @default(cuid())
+  title       String
+  order       Int
+  videoUrl    String?
+  content     String?
+  moduleId    String
+  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  attachments Attachment[]
+  quiz        Quiz?
+  progress    LessonProgress[]
+
+  @@index([moduleId])
+}
+
+model Attachment {
+  id       String @id @default(cuid())
+  fileName String
+  fileUrl  String
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId])
+}
+
+model Enrollment {
+  id         String   @id @default(cuid())
+  studentId  String
+  student    User     @relation(fields: [studentId], references: [id])
+  courseId   String
+  course     Course   @relation(fields: [courseId], references: [id])
+  enrolledAt DateTime @default(now())
+
+  @@unique([studentId, courseId])
+  @@index([courseId])
+}
+
+model LessonProgress {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     User     @relation(fields: [studentId], references: [id])
+  lessonId    String
+  lesson      Lesson   @relation(fields: [lessonId], references: [id])
+  completedAt DateTime @default(now())
+
+  @@unique([studentId, lessonId])
+}
+
+model Quiz {
+  id           String     @id @default(cuid())
+  title        String
+  passingScore Int        @default(60) // percentage
+  lessonId     String     @unique
+  lesson       Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  questions    Question[]
+  attempts     QuizAttempt[]
+}
+
+model Question {
+  id            String       @id @default(cuid())
+  quizId        String
+  quiz          Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  type          QuestionType
+  prompt        String
+  options       Json?        // for MULTIPLE_CHOICE: string[]
+  correctAnswer String       // option text, or expected short answer
+  points        Int          @default(1)
+  order         Int
+
+  @@index([quizId])
+}
+
+model QuizAttempt {
+  id         String   @id @default(cuid())
+  studentId  String
+  student    User     @relation(fields: [studentId], references: [id])
+  quizId     String
+  quiz       Quiz     @relation(fields: [quizId], references: [id])
+  answers    Json     // { questionId: answer }
+  score      Int      // raw points earned
+  maxScore   Int
+  percentage Int
+  passed     Boolean
+  submittedAt DateTime @default(now())
+
+  @@index([studentId, quizId])
+}
+
+model Certificate {
+  id            String   @id @default(cuid())
+  certificateNo String   @unique
+  studentId     String
+  student       User     @relation(fields: [studentId], references: [id])
+  courseTitle   String
+  issuedAt      DateTime @default(now())
+
+  @@index([studentId])
+}
+
+model MemorizationEntry {
+  id         String   @id @default(cuid())
+  studentId  String
+  student    User     @relation(fields: [studentId], references: [id])
+  juzNumber  Int
+  percentage Int      @default(0)
+  updatedAt  DateTime @updatedAt
+
+  @@unique([studentId, juzNumber])
+}
+
+model Recitation {
+  id         String   @id @default(cuid())
+  studentId  String
+  student    User     @relation(fields: [studentId], references: [id])
+  audioUrl   String
+  surah      String
+  ayahRange  String
+  feedback   String?
+  reviewedBy String?
+  submittedAt DateTime @default(now())
+
+  @@index([studentId])
+}
+
+model ForumPost {
+  id        String    @id @default(cuid())
+  title     String
+  body      String
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id])
+  comments  ForumComment[]
+  createdAt DateTime  @default(now())
+}
+
+model ForumComment {
+  id        String    @id @default(cuid())
+  body      String
+  postId    String
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id])
+  createdAt DateTime  @default(now())
+
+  @@index([postId])
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  authorId  String
+  author    User     @relation("AnnouncementAuthor", fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  reference   String        @unique // Paystack transaction reference
+  studentId   String
+  student     User          @relation(fields: [studentId], references: [id])
+  courseId    String
+  course      Course        @relation(fields: [courseId], references: [id])
+  amountKobo  Int
+  status      PaymentStatus @default(PENDING)
+  paidAt      DateTime?
+  createdAt   DateTime      @default(now())
+
+  @@index([studentId])
+  @@index([courseId])
+}
+
+model Badge {
+  id          String      @id @default(cuid())
+  code        String      @unique // stable key used by award logic, e.g. "first_lesson"
+  name        String
+  description String
+  icon        String      @default("★")
+  users       UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  badgeId   String
+  badge     Badge    @relation(fields: [badgeId], references: [id])
+  earnedAt  DateTime @default(now())
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+}
