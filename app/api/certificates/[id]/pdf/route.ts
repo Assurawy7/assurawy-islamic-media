@@ -26,10 +26,11 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   } catch (err) {
     // Most likely cause: a name/title contains characters the standard PDF
     // fonts can't encode (see the limitation noted in lib/certificate-pdf.ts).
-    console.error("[certificate-pdf] Generation failed:", err);
+  console.error("CERTIFICATE PDF ERROR:", JSON.stringify(err, null, 2));
     return NextResponse.json(
-      { error: "Could not generate the certificate PDF. Please contact support." },
-      { status: 500 }
+      { 
+  error: String(err)
+}
     );
   }
 

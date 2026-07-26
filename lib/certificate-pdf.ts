@@ -1,27 +1,6 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-
-/**
- * KNOWN LIMITATION — non-Latin names/titles: the standard PDF fonts used
- * below (WinAnsi encoding) can only render Latin-script text (plus common
- * Latin-1 accents). On an Islamic education platform it's very plausible
- * for a student's name or a course title to contain Arabic script — pdf-lib
- * will throw ("WinAnsi cannot encode ...") the moment `drawText` hits an
- * unsupported character, which would otherwise surface as an unhandled 500.
- *
- * The route calling this (app/api/certificates/[id]/pdf/route.ts) wraps the
- * call in try/catch so that case fails as a clean error response instead of
- * crashing, but the real fix before relying on this for Arabic names is to
- * embed a Unicode-capable font (e.g. the Amiri font already loaded for the
- * web UI in app/layout.tsx) via `@pdf-lib/fontkit`:
- *
- *   import fontkit from "@pdf-lib/fontkit";
- *   doc.registerFontkit(fontkit);
- *   const amiri = await doc.embedFont(amiriTtfBytes); // fetch/bundle the .ttf
- *
- * That requires adding the `@pdf-lib/fontkit` package and a font file, which
- * this pass didn't add (no network access to fetch new dependencies/assets
- * in this environment) — tracked here so it isn't silently forgotten.
- */
+import fs from "fs/promises";
+import path from "path";
 
 type CertificateData = {
   studentName: string;
@@ -30,121 +9,449 @@ type CertificateData = {
   issuedAt: Date;
 };
 
-// Brand colors, matched to the Tailwind theme (deep / gold / cream).
-const DEEP = rgb(0.055, 0.231, 0.181); // #0E3B2E
-const GOLD = rgb(0.776, 0.631, 0.357); // #C6A15B
-const CREAM = rgb(0.973, 0.953, 0.906); // #F8F3E7
-const INK = rgb(0.086, 0.149, 0.122); // #16261F
+// ===============================
+// COLORS
+// ===============================
 
-export async function generateCertificatePdf(data: CertificateData): Promise<Uint8Array> {
-  const doc = await PDFDocument.create();
-  const page = doc.addPage([792, 612]); // US Letter, landscape
+const EMERALD = rgb(0.05, 0.28, 0.18);
+const GOLD = rgb(0.79, 0.63, 0.27);
+const LIGHT_GOLD = rgb(0.95, 0.88, 0.62);
+const CREAM = rgb(0.985, 0.97, 0.93);
+const TEXT = rgb(0.12, 0.12, 0.12);
+const BLACK = rgb(0, 0, 0);
+
+// ===============================
+// PDF
+// ===============================
+
+export async function generateCertificatePdf(
+  data: CertificateData
+): Promise<Uint8Array> {
+
+  const pdf = await PDFDocument.create();
+
+  const page = pdf.addPage([842, 595]);
+
   const { width, height } = page.getSize();
 
-  const serifBold = await doc.embedFont(StandardFonts.TimesRomanBold);
-  const serif = await doc.embedFont(StandardFonts.TimesRoman);
-  const serifItalic = await doc.embedFont(StandardFonts.TimesRomanItalic);
+  const titleFont = await pdf.embedFont(StandardFonts.TimesRomanBold);
+  const bodyFont = await pdf.embedFont(StandardFonts.TimesRoman);
+  const italicFont = await pdf.embedFont(StandardFonts.TimesRomanItalic);
 
-  // Background
-  page.drawRectangle({ x: 0, y: 0, width, height, color: CREAM });
+  // ===============================
+  // LOAD LOGO
+  // ===============================
 
-  // Outer deep-green border
-  const margin = 24;
+  let logo: any = null;
+
+  try {
+    const logoBytes = await fs.readFile(
+      path.join(
+        process.cwd(),
+        "public/images/certificate/logo.png"
+      )
+    );
+
+    logo = await pdf.embedPng(logoBytes);
+
+  } catch (e) {
+    console.log("Logo not found");
+  }
+
+  // ===============================
+  // LOAD SIGNATURE
+  // ===============================
+
+  let signature: any = null;
+
+  try {
+
+    const signBytes = await fs.readFile(
+      path.join(
+        process.cwd(),
+        "public/images/certificate/signature.png"
+      )
+    );
+
+    signature = await pdf.embedPng(signBytes);
+
+  } catch (e) {
+
+    console.log("Signature not found");
+
+  }
+
+  // ===============================
+  // BACKGROUND
+  // ===============================
+
   page.drawRectangle({
-    x: margin,
-    y: margin,
-    width: width - margin * 2,
-    height: height - margin * 2,
-    borderColor: DEEP,
-    borderWidth: 3,
+    x: 0,
+    y: 0,
+    width,
+    height,
+    color: CREAM,
   });
 
-  // Inner gold border
-  const innerMargin = 36;
+  // ===============================
+  // ISLAMIC PATTERN
+  // ===============================
+
+  for (let x = 25; x < width; x += 45) {
+
+    for (let y = 25; y < height; y += 45) {
+
+      page.drawCircle({
+
+        x,
+
+        y,
+
+        size: 7,
+
+        borderColor: LIGHT_GOLD,
+
+        borderWidth: 0.4,
+
+        opacity: 0.20,
+
+      });
+
+    }
+
+  }
+
+  // ===============================
+  // BORDERS
+  // ===============================
+
   page.drawRectangle({
-    x: innerMargin,
-    y: innerMargin,
-    width: width - innerMargin * 2,
-    height: height - innerMargin * 2,
+
+    x: 18,
+
+    y: 18,
+
+    width: width - 36,
+
+    height: height - 36,
+
+    borderColor: EMERALD,
+
+    borderWidth: 4,
+
+  });
+
+  page.drawRectangle({
+
+    x: 34,
+
+    y: 34,
+
+    width: width - 68,
+
+    height: height - 68,
+
     borderColor: GOLD,
-    borderWidth: 1.2,
+
+    borderWidth: 1.5,
+
   });
 
-  const centerX = width / 2;
-  const drawCentered = (
+  // ===============================
+  // GOLD SEAL
+  // ===============================
+
+  page.drawCircle({
+
+    x: width / 2,
+
+    y: 150,
+
+    size: 38,
+
+    color: GOLD,
+
+  });
+
+  page.drawCircle({
+
+    x: width / 2,
+
+    y: 150,
+
+    size: 31,
+
+    borderColor: LIGHT_GOLD,
+
+    borderWidth: 2,
+
+  });
+
+page.drawText("AIM", {
+    x: width - 135,
+    y: 142,
+    font: titleFont,
+    size: 12,
+    color: CREAM,
+});
+
+  // ===============================
+  // LOGO
+  // ===============================
+
+  if (logo) {
+
+    page.drawImage(logo, {
+
+      x: width / 2 - 45,
+
+      y: height - 110,
+
+      width: 90,
+
+      height: 90,
+
+    });
+
+  }  // ===============================
+  // HELPER
+  // ===============================
+
+  const center = width / 2;
+
+  function drawCentered(
     text: string,
     y: number,
-    font: typeof serif,
+    font: any,
     size: number,
-    color = INK
-  ) => {
-    const textWidth = font.widthOfTextAtSize(text, size);
-    page.drawText(text, { x: centerX - textWidth / 2, y, size, font, color });
-  };
+    color = TEXT
+  ) {
+    const w = font.widthOfTextAtSize(text, size);
 
-  // Brand mark
-  drawCentered("ASSURAWY ISLAMIC MEDIA", height - 90, serifBold, 16, DEEP);
-  drawCentered("Designing Da'wah with Excellence", height - 110, serifItalic, 10, GOLD);
+    page.drawText(text, {
+      x: center - w / 2,
+      y,
+      font,
+      size,
+      color,
+    });
+  }
 
-  // Small geometric divider
+  // ===============================
+  // ARABIC HEADER
+  // ===============================
+
+  drawCentered(
+    "",
+    height - 35,
+    italicFont,
+    12,
+    GOLD
+  );
+
+  // ===============================
+  // BRAND
+  // ===============================
+
+  drawCentered(
+    "ASSURAWY ISLAMIC MEDIA",
+    height - 130,
+    titleFont,
+    20,
+    EMERALD
+  );
+
+  drawCentered(
+    "Designing Da'wah with Excellence",
+    height - 150,
+    italicFont,
+    11,
+    GOLD
+  );
+
   page.drawLine({
-    start: { x: centerX - 60, y: height - 128, },
-    end: { x: centerX + 60, y: height - 128 },
+    start: {
+      x: center - 90,
+      y: height - 165,
+    },
+    end: {
+      x: center + 90,
+      y: height - 165,
+    },
     thickness: 1,
     color: GOLD,
   });
 
-  // Title
-  drawCentered("Certificate of Completion", height - 175, serifBold, 30, DEEP);
+  // ===============================
+  // TITLE
+  // ===============================
 
-  // Body copy
-  drawCentered("This is to certify that", height - 220, serif, 12);
-  drawCentered(data.studentName, height - 255, serifBold, 24, DEEP);
-  drawCentered("has successfully completed the course", height - 285, serif, 12);
-  drawCentered(data.courseTitle, height - 318, serifBold, 18, DEEP);
+  drawCentered(
+    "CERTIFICATE OF COMPLETION",
+    height - 215,
+    titleFont,
+    30,
+    EMERALD
+  );
 
-  const dateStr = data.issuedAt.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
+  drawCentered(
+    "This Certificate is Proudly Presented To",
+    height - 245,
+    italicFont,
+    12
+  );
+
+  // ===============================
+  // STUDENT NAME
+  // ===============================
+
+  drawCentered(
+    data.studentName.toUpperCase(),
+    height - 285,
+    titleFont,
+    26,
+    EMERALD
+  );
+
+  page.drawLine({
+    start: {
+      x: 200,
+      y: height - 292,
+    },
+    end: {
+      x: width - 200,
+      y: height - 292,
+    },
+    thickness: 1,
+    color: GOLD,
+  });
+
+  drawCentered(
+    " Alhamdulillah For Successfully Completing The Course",
+    height - 325,
+    bodyFont,
+    12
+  );
+
+  drawCentered(
+    data.courseTitle,
+    height - 355,
+    titleFont,
+    18,
+    EMERALD
+  );
+
+  const issued = data.issuedAt.toLocaleDateString("en-US", {
     day: "numeric",
+    month: "long",
+    year: "numeric",
   });
-  drawCentered(`Completed on ${dateStr}`, height - 345, serifItalic, 11);
 
-  // Footer: signature line + certificate ID
-  const footerY = 110;
+  drawCentered(
+    `Issued on ${issued}`,
+    height - 385,
+    italicFont,
+    11,
+    GOLD
+  );  // ===============================
+  // SIGNATURE
+  // ===============================
+
+  if (signature) {
+  page.drawImage(signature, {
+    x: 130,
+    y: 120,
+    width: 140,
+    height: 60,
+  });
+}
+
   page.drawLine({
-    start: { x: 120, y: footerY },
-    end: { x: 320, y: footerY },
+    start: { x: 110, y: 100 },
+    end: { x: 290, y: 100 },
     thickness: 1,
-    color: DEEP,
-  });
-  page.drawText("Director, Assurawy Islamic Media", {
-    x: 120,
-    y: footerY - 16,
-    size: 9,
-    font: serif,
-    color: INK,
+    color: EMERALD,
   });
 
-  const certLabel = `Certificate ID: ${data.certificateNo}`;
-  const certWidth = serif.widthOfTextAtSize(certLabel, 10);
-  page.drawText(certLabel, {
-    x: width - 120 - certWidth,
-    y: footerY - 2,
+  page.drawText("Director", {
+    x: 170,
+    y: 82,
+    font: bodyFont,
     size: 10,
-    font: serif,
-    color: INK,
+    color: TEXT,
   });
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://assurawy.org").replace(/^https?:\/\//, "");
-  const verifyLabel = `Verify at ${siteUrl}/verify`;
-  const verifyWidth = serifItalic.widthOfTextAtSize(verifyLabel, 9);
-  page.drawText(verifyLabel, {
-    x: width - 120 - verifyWidth,
-    y: footerY - 16,
+
+  page.drawText("Assurawy Islamic Media", {
+    x: 125,
+    y: 68,
+    font: italicFont,
     size: 9,
-    font: serifItalic,
     color: GOLD,
   });
 
-  return doc.save();
+  // ===============================
+  // CERTIFICATE ID
+  // ===============================
+
+  const certText = `Certificate ID: ${data.certificateNo}`;
+
+  page.drawText(certText, {
+    x: width - 260,
+    y: 105,
+    font: bodyFont,
+    size: 12,
+    color: TEXT,
+  });
+
+  page.drawText("Verified by Assurawy Islamic Media", {
+    x: width - 260,
+    y: 88,
+    font: italicFont,
+    size: 9,
+    color: GOLD,
+  });
+
+  // ===============================
+  // GOLD SEAL TEXT
+  // ===============================
+
+  page.drawText("", {
+    x: width - 120,
+    y: 112,
+    font: titleFont,
+    size: 8,
+    color: EMERALD,
+  });
+
+  page.drawText("", {
+    x: width - 140,
+    y: 95,
+    font: bodyFont,
+    size: 9,
+    color: EMERALD,
+  });
+
+  // ===============================
+  // FOOTER
+  // ===============================
+
+  page.drawLine({
+    start: { x: 60, y: 45 },
+    end: { x: width - 60, y: 45 },
+    thickness: 0.8,
+    color: GOLD,
+  });
+
+  page.drawText(
+    "© Assurawy Islamic Media • Designing Da'wah with Excellence",
+    {
+      x: 180,
+      y: 28,
+      font: italicFont,
+      size: 8,
+      color: BLACK,
+    }
+  );
+
+  return await pdf.save();
 }

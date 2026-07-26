@@ -2,73 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
-  scroll-behavior: smooth;
+:root {
+  --background: #ffffff; /* Tsantsar fari mai haske */
+  --foreground: #0f172a; /* Duhan rubutu domin karatu ya fito fili */
+}
+
+/* Tabbatar da cewa ko da komfutar mutum tana Dark Mode, shafin zai kasance Light Mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #ffffff;
+    --foreground: #0f172a;
+  }
 }
 
 body {
-  background-color: #F8F3E7;
-  color: #16261F;
-}
-
-/* Signature motif: an eight-point geometric star rule, used sparingly
-   as a section divider — a nod to Islamic geometric ornament rather
-   than a generic gradient rule. */
-.geo-divider {
-  position: relative;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.geo-divider::before,
-.geo-divider::after {
-  content: "";
-  height: 1px;
-  flex: 1;
-  background: linear-gradient(90deg, transparent, #C6A15B, transparent);
-}
-.geo-divider .geo-mark {
-  margin: 0 14px;
-  color: #C6A15B;
-  font-size: 14px;
-  line-height: 1;
-}
-
-/* Sanad chain — used on the Courses page to render a module list as a
-   chain of transmission (isnad) rather than generic numbered steps. */
-.sanad-line {
-  position: relative;
-}
-.sanad-line::before {
-  content: "";
-  position: absolute;
-  left: 11px;
-  top: 8px;
-  bottom: 8px;
-  width: 1px;
-  background: repeating-linear-gradient(
-    to bottom,
-    #C6A15B 0,
-    #C6A15B 4px,
-    transparent 4px,
-    transparent 9px
-  );
-}
-
-.focus-ring {
-  outline: none;
-}
-.focus-ring:focus-visible {
-  outline: 2px solid #C6A15B;
-  outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
-  }
+  color: var(--foreground);
+  background-color: var(--background);
 }

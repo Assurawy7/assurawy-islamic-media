@@ -57,34 +57,33 @@ const reasons = [
 export default function HomePage() {
   return (
     <>
-      {/* HERO */}
-      <section className="relative overflow-hidden bg-deep text-cream">
-        <div
-          className="absolute inset-0 opacity-40"
-          style={{ backgroundImage: "url('/arabesque.svg')", backgroundSize: "220px" }}
-          aria-hidden
-        />
-        <div className="relative mx-auto max-w-7xl px-5 py-24 md:px-8 md:py-32">
-          <p className="font-arabic text-xl text-gold/90">بسم الله الرحمن الرحيم</p>
-          <h1 className="mt-5 max-w-2xl font-display text-4xl font-semibold leading-tight md:text-6xl">
-            Learn Islam Anywhere,
-            <span className="text-gold"> Anytime</span>
-          </h1>
-          <p className="mt-6 max-w-lg text-lg text-cream/80">
-            Structured Qur&apos;an, Fiqh, Seerah, Tafseer and Hadith courses,
-            built like a traditional sanad and delivered through a modern
-            online academy.
+      {/* HERO SECTION */}
+      <section className="relative overflow-hidden bg-[#0B132B] text-slate-100 py-24 md:py-32 border-b border-[#D4AF37]/20">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#D4AF37]/10 via-transparent to-transparent pointer-events-none" />
+        <div className="relative mx-auto max-w-7xl px-5 md:px-8 text-center md:text-left">
+          <p className="font-serif text-xl font-bold text-[#F5D77F] tracking-widest drop-shadow-md">
+            بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
           </p>
-          <div className="mt-9 flex flex-wrap gap-4">
+          <h1 className="mt-5 max-w-3xl font-serif text-4xl font-bold leading-tight text-white md:text-6xl">
+            Learn Islam Anywhere,{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5D77F] via-[#D4AF37] to-[#8C6D1F]">
+              Anytime
+            </span>
+          </h1>
+          <p className="mt-6 max-w-xl text-lg text-slate-300 leading-relaxed">
+            Structured Qur&apos;an, Fiqh, Seerah, Tafseer and Hadith courses,
+            built like a traditional sanad and delivered through a modern digital academy.
+          </p>
+          <div className="mt-10 flex flex-wrap gap-4 justify-center md:justify-start">
             <Link
               href="/courses"
-              className="focus-ring rounded-full bg-gold px-7 py-3.5 text-sm font-semibold text-deep transition hover:bg-goldLight"
+              className="rounded-xl bg-gradient-to-r from-[#F5D77F] via-[#D4AF37] to-[#8C6D1F] px-8 py-3.5 text-sm font-bold text-[#0B132B] shadow-lg hover:brightness-110 active:scale-95 transition"
             >
               Start Learning
             </Link>
             <Link
               href="/register"
-              className="focus-ring rounded-full border border-cream/40 px-7 py-3.5 text-sm font-semibold text-cream transition hover:border-gold hover:text-gold"
+              className="rounded-xl border border-[#D4AF37]/40 px-8 py-3.5 text-sm font-semibold text-[#F5D77F] hover:bg-[#D4AF37]/10 transition"
             >
               Register Now
             </Link>
@@ -96,14 +95,14 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl px-5 py-20 md:px-8">
         <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-gold">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#D4AF37]">
               Featured Courses
             </p>
-            <h2 className="mt-2 font-display text-3xl font-semibold text-deep">
-              Begin your path of knowledge
+            <h2 className="mt-2 font-serif text-3xl font-bold text-white">
+              Begin Your Path of Knowledge
             </h2>
           </div>
-          <Link href="/courses" className="focus-ring text-sm font-semibold text-emerald hover:text-deep">
+          <Link href="/courses" className="text-sm font-semibold text-[#F5D77F] hover:underline">
             View all courses →
           </Link>
         </div>
@@ -115,22 +114,22 @@ export default function HomePage() {
       </section>
 
       {/* WHY CHOOSE US */}
-      <section className="bg-parchment py-20">
+      <section className="bg-[#060B1E] py-20 border-y border-[#D4AF37]/10">
         <div className="mx-auto max-w-7xl px-5 md:px-8">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gold">
+          <p className="text-xs font-semibold uppercase tracking-widest text-[#D4AF37]">
             Why Assurawy
           </p>
-          <h2 className="mt-2 font-display text-3xl font-semibold text-deep">
-            Why students choose Assurawy Islamic Media
+          <h2 className="mt-2 font-serif text-3xl font-bold text-white">
+            Why Students Choose Assurawy Academy
           </h2>
           <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {reasons.map((r) => (
-              <div key={r.title}>
-                <div className="mb-4 h-1 w-10 rounded-full bg-gold" />
-                <h3 className="font-display text-lg font-semibold text-deep">
+              <div key={r.title} className="p-6 rounded-2xl bg-[#0B132B] border border-[#D4AF37]/20 shadow-md">
+                <div className="mb-4 h-1 w-10 rounded-full bg-[#D4AF37]" />
+                <h3 className="font-serif text-lg font-bold text-[#F5D77F]">
                   {r.title}
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-ink/70">
+                <p className="mt-2 text-xs leading-relaxed text-slate-300">
                   {r.text}
                 </p>
               </div>
@@ -141,11 +140,11 @@ export default function HomePage() {
 
       {/* TESTIMONIALS */}
       <section className="mx-auto max-w-7xl px-5 py-20 md:px-8">
-        <p className="text-xs font-semibold uppercase tracking-wide text-gold">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[#D4AF37]">
           Student Voices
         </p>
-        <h2 className="mt-2 font-display text-3xl font-semibold text-deep">
-          What our students say
+        <h2 className="mt-2 font-serif text-3xl font-bold text-white">
+          What Our Students Say
         </h2>
         <div className="mt-10 grid gap-6 md:grid-cols-3">
           <TestimonialCard
@@ -167,18 +166,18 @@ export default function HomePage() {
       </section>
 
       {/* LATEST ARTICLES */}
-      <section className="bg-sand py-20">
+      <section className="bg-[#060B1E] py-20 border-t border-[#D4AF37]/10">
         <div className="mx-auto max-w-7xl px-5 md:px-8">
           <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gold">
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#D4AF37]">
                 From the Blog
               </p>
-              <h2 className="mt-2 font-display text-3xl font-semibold text-deep">
-                Latest Islamic articles
+              <h2 className="mt-2 font-serif text-3xl font-bold text-white">
+                Latest Islamic Articles
               </h2>
             </div>
-            <Link href="/articles" className="focus-ring text-sm font-semibold text-emerald hover:text-deep">
+            <Link href="/articles" className="text-sm font-semibold text-[#F5D77F] hover:underline">
               Read all articles →
             </Link>
           </div>
@@ -205,19 +204,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="bg-deep py-20 text-cream">
-        <div className="mx-auto max-w-3xl px-5 text-center md:px-8">
-          <h2 className="font-display text-3xl font-semibold md:text-4xl">
-            Ready to begin your journey of Islamic knowledge?
+      {/* CALL TO ACTION */}
+      <section className="bg-gradient-to-br from-[#0B132B] via-[#1C2541] to-[#060B1E] py-20 text-center border-t border-[#D4AF37]/20">
+        <div className="mx-auto max-w-3xl px-5 md:px-8">
+          <h2 className="font-serif text-3xl font-bold text-white md:text-4xl">
+            Ready to Begin Your Journey of Islamic Knowledge?
           </h2>
-          <p className="mt-4 text-cream/75">
-            Join thousands of students learning Qur&apos;an, Fiqh, Seerah and
-            more with Assurawy Islamic Media.
+          <p className="mt-4 text-slate-300 text-sm">
+            Join thousands of students learning Qur&apos;an, Fiqh, Seerah and more with Assurawy Islamic Media.
           </p>
           <Link
             href="/register"
-            className="focus-ring mt-8 inline-block rounded-full bg-gold px-8 py-4 text-sm font-semibold text-deep transition hover:bg-goldLight"
+            className="mt-8 inline-block rounded-xl bg-gradient-to-r from-[#F5D77F] via-[#D4AF37] to-[#8C6D1F] px-8 py-4 text-sm font-bold text-[#0B132B] shadow-lg hover:brightness-110 transition"
           >
             Register Now
           </Link>
