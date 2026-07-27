@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
+export const dynamic = 'force-dynamic';
 export default function ContactPage() {
   const [sent, setSent] = useState(false);
 

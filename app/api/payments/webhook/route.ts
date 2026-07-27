@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyWebhookSignature } from "@/lib/paystack";
 import { fulfillSuccessfulPayment, markPaymentFailed } from "@/lib/payment-fulfillment";
-
+export const dynamic = 'force-dynamic';
 /**
  * Configure this URL (https://yourdomain.com/api/payments/webhook) in the
  * Paystack dashboard under Settings → API Keys & Webhooks. Paystack calls

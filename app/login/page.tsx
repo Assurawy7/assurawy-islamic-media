@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-
+import Image from "next/image";
 function safeNextPath(next: string | null): string | null {
   if (!next) return null;
   if (!next.startsWith("/") || next.startsWith("//")) return null;
@@ -46,9 +46,20 @@ function LoginForm() {
         return;
       }
 
-      // Redirect user upon successful login
-      router.push(nextPath || "/dashboard");
-      router.refresh();
+      // Redirect based on user role
+const role = data.user?.role;
+
+if (nextPath) {
+  router.push(nextPath);
+} else if (role === "ADMIN") {
+  router.push("/admin");
+} else if (role === "TEACHER") {
+  router.push("/teacher");
+} else {
+  router.push("/dashboard");
+}
+
+router.refresh();
     } catch (err) {
       setError("An unexpected error occurred. Please check your connection.");
     } finally {
@@ -72,9 +83,16 @@ function LoginForm() {
           بسم الله الرحمن الرحيم
         </p>
         <div className="flex justify-center items-center gap-2 my-1">
-          <div className="w-8 h-8 rounded-full bg-[#1B2A4A] border border-[#D4AF37] flex items-center justify-center text-[#D4AF37] font-bold text-sm shadow-sm">
-            ☪
-          </div>
+          <div className="flex justify-center">
+  <Image
+    src="/logo.png"
+    alt="Assurawy Islamic Media"
+    width={64}
+    height={64}
+    className="rounded-full border border-[#D4AF37] shadow-md"
+    priority
+  />
+</div>
         </div>
         <h1 className="font-serif text-2xl font-bold tracking-tight text-deep">
           Welcome Back

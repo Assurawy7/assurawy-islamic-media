@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-
+export const dynamic = 'force-dynamic';
 type Question = {
   id: string;
   type: "MULTIPLE_CHOICE" | "SHORT_ANSWER";

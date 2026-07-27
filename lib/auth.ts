@@ -2,18 +2,11 @@ import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import type { Role } from "@prisma/client";
 
-// In production, a missing OR placeholder JWT_SECRET must fail loudly at
-// startup rather than silently signing sessions with a well-known fallback
-// string — anyone could forge an admin session cookie against that fallback
-// if it ever shipped. This checks for the specific placeholder strings used
-// in .env.example and docker-compose.yml's own `${JWT_SECRET:-...}` default,
-// not just an entirely unset value — docker-compose sets the env var to that
-// literal placeholder string if you don't override it, so "is it set" alone
-// wouldn't catch that case.
 const KNOWN_PLACEHOLDER_SECRETS = new Set([
   "replace-with-a-long-random-string",
   "dev-only-secret-change-me",
 ]);
+
 if (
   process.env.NODE_ENV === "production" &&
   (!process.env.JWT_SECRET || KNOWN_PLACEHOLDER_SECRETS.has(process.env.JWT_SECRET))
@@ -31,6 +24,12 @@ const SECRET = new TextEncoder().encode(
 
 export const SESSION_COOKIE = "assurawy_session";
 
+// 💡 AN ƘARA WANNAN DOMIN MAGANCE ERRO ƊIN TS(2305)
+export const authOptions = {
+  secret: process.env.JWT_SECRET || "dev-only-secret-change-me",
+  session: { strategy: "jwt" as const },
+};
+
 export type SessionPayload = {
   sub: string; // user id
   name: string;
@@ -47,7 +46,13 @@ export async function verifyPassword(password: string, hash: string) {
 }
 
 export async function signSession(payload: SessionPayload) {
-  return new SignJWT({ ...payload })
+  // Tabbatar an tura role din a fili zuwa JWT token
+  return new SignJWT({
+    sub: payload.sub,
+    name: payload.name,
+    email: payload.email,
+    role: payload.role,
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
@@ -57,7 +62,12 @@ export async function signSession(payload: SessionPayload) {
 export async function verifySession(token: string): Promise<SessionPayload | null> {
   try {
     const { payload } = await jwtVerify(token, SECRET);
-    return payload as unknown as SessionPayload;
+    return {
+      sub: payload.sub as string,
+      name: payload.name as string,
+      email: payload.email as string,
+      role: payload.role as Role,
+    };
   } catch {
     return null;
   }

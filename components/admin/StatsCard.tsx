@@ -1,5 +1,5 @@
-import { LucideIcon } from "lucide-react";
-
+import type { LucideIcon } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 type Props = {
   title: string;
   value: string | number;

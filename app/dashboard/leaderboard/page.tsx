@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 type Row = { rank: number; name: string; points: number; currentStreak: number; isMe: boolean };
-
+export const dynamic = 'force-dynamic';
 export default function LeaderboardPage() {
   const [rows, setRows] = useState<Row[] | null>(null);
 

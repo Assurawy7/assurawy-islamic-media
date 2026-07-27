@@ -1,5 +1,4 @@
 // Assurawy Islamic Media — Database Schema
-// Run `npx prisma migrate dev --name init` after setting DATABASE_URL
 
 generator client {
   provider      = "prisma-client-js"
@@ -29,81 +28,121 @@ enum PaymentStatus {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  name          String
-  email         String   @unique
-  phone         String?  // E.164 format, e.g. +2348012345678 — used for WhatsApp notifications
-  passwordHash  String
-  role          Role     @default(STUDENT)
-  bio           String?
-  avatarUrl     String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  role         Role     @default(STUDENT)
+  bio          String?
+  avatarUrl    String?
+  image        String?  
+  quizScores   Json?    // <--- An kara fagen quizScores anan don gyara kuskuren build
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Gamification
-  points          Int       @default(0)
-  currentStreak   Int       @default(0)
-  longestStreak    Int      @default(0)
-  lastActivityAt  DateTime?
+  points         Int       @default(0)
+  currentStreak  Int       @default(0)
+  longestStreak  Int       @default(0)
+  lastActivityAt DateTime?
 
   // Teacher relations
-  coursesTaught     Course[]        @relation("TeacherCourses")
+  coursesTaught Course[]    @relation("TeacherCourses")
+  liveClasses   LiveClass[] @relation("TeacherLiveClasses")
 
   // Student relations
-  enrollments       Enrollment[]
-  quizAttempts      QuizAttempt[]
-  certificates      Certificate[]
-  lessonProgress    LessonProgress[]
-  memorization      MemorizationEntry[]
-  recitations       Recitation[]
-  forumPosts        ForumPost[]
-  forumComments     ForumComment[]
-  announcements     Announcement[]  @relation("AnnouncementAuthor")
-  payments          Payment[]
-  badges            UserBadge[]
+  enrollments           Enrollment[]
+  quizAttempts          QuizAttempt[]
+  certificates          Certificate[]
+  lessonProgress        LessonProgress[]
+  memorization          MemorizationEntry[]
+  recitations           Recitation[]
+  liveAttendances       LiveAttendance[]
+  assignmentSubmissions AssignmentSubmission[]
+
+  // Community
+  forumPosts    ForumPost[]
+  forumComments ForumComment[]
+  announcements Announcement[] @relation("AnnouncementAuthor")
+
+  // Finance
+  payments Payment[]
+
+  // Badges
+  badges UserBadge[]
+
+  // Notifications & Messages
+  notifications    Notification[]
+  messagesSent     Message[]      @relation("SenderMessages")
+  messagesReceived Message[]      @relation("ReceiverMessages")
+
+  // Activity & Reviews
+  activityLogs  ActivityLog[]
+  courseReviews CourseReview[]
 
   @@index([role])
 }
 
 model Course {
-  id           String    @id @default(cuid())
-  slug         String    @unique
+  id           String  @id @default(cuid())
+  slug         String  @unique
   title        String
   description  String
-  level        String    @default("Foundational")
+  level        String  @default("Foundational")
   thumbnailUrl String?
-  published    Boolean   @default(false)
-  priceKobo    Int       @default(0) // 0 = free course. Nigerian Naira, stored in kobo (₦1 = 100 kobo).
-  teacherId    String
-  teacher      User      @relation("TeacherCourses", fields: [teacherId], references: [id])
-  modules      Module[]
-  enrollments  Enrollment[]
-  payments     Payment[]
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  published    Boolean @default(false)
+  priceKobo    Int     @default(0)
+
+  teacherId String
+  teacher   User   @relation("TeacherCourses", fields: [teacherId], references: [id])
+
+  categoryId String?
+  category   CourseCategory? @relation(fields: [categoryId], references: [id])
+
+  modules     Module[]
+  enrollments Enrollment[]
+  payments    Payment[]
+  liveClasses LiveClass[]
+  reviews     CourseReview[]
+  assignments Assignment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([teacherId])
+  @@index([categoryId])
+}
+
+model CourseCategory {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+
+  courses Course[]
+
+  createdAt DateTime @default(now())
 }
 
 model Module {
-  id        String   @id @default(cuid())
-  title     String
-  order     Int
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  lessons   Lesson[]
+  id       String   @id @default(cuid())
+  title    String
+  order    Int
+  courseId String
+  course   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons  Lesson[]
 
   @@index([courseId])
 }
 
 model Lesson {
-  id          String   @id @default(cuid())
+  id          String           @id @default(cuid())
   title       String
   order       Int
   videoUrl    String?
   content     String?
   moduleId    String
-  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  module      Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   attachments Attachment[]
   quiz        Quiz?
   progress    LessonProgress[]
@@ -144,12 +183,53 @@ model LessonProgress {
   @@unique([studentId, lessonId])
 }
 
+model LiveClass {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  meetingUrl  String
+  platform    String   @default("ZOOM")
+  scheduledAt DateTime 
+  duration    Int      @default(60) 
+  status      String   @default("UPCOMING")
+
+  teacherId String
+  teacher   User   @relation("TeacherLiveClasses", fields: [teacherId], references: [id])
+
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  attendances LiveAttendance[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([teacherId])
+  @@index([courseId])
+}
+
+model LiveAttendance {
+  id          String    @id @default(cuid())
+  liveClassId String
+  liveClass   LiveClass @relation(fields: [liveClassId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id])
+
+  joinedAt DateTime  @default(now())
+  leftAt   DateTime?
+  duration Int       @default(0)
+
+  @@unique([liveClassId, studentId])
+  @@index([studentId])
+}
+
 model Quiz {
-  id           String     @id @default(cuid())
+  id           String        @id @default(cuid())
   title        String
-  passingScore Int        @default(60) // percentage
-  lessonId     String     @unique
-  lesson       Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  passingScore Int           @default(60)
+  lessonId     String        @unique
+  lesson       Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   questions    Question[]
   attempts     QuizAttempt[]
 }
@@ -160,8 +240,8 @@ model Question {
   quiz          Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
   type          QuestionType
   prompt        String
-  options       Json?        // for MULTIPLE_CHOICE: string[]
-  correctAnswer String       // option text, or expected short answer
+  options       Json?
+  correctAnswer String
   points        Int          @default(1)
   order         Int
 
@@ -169,19 +249,53 @@ model Question {
 }
 
 model QuizAttempt {
-  id         String   @id @default(cuid())
-  studentId  String
-  student    User     @relation(fields: [studentId], references: [id])
-  quizId     String
-  quiz       Quiz     @relation(fields: [quizId], references: [id])
-  answers    Json     // { questionId: answer }
-  score      Int      // raw points earned
-  maxScore   Int
-  percentage Int
-  passed     Boolean
+  id          String   @id @default(cuid())
+  studentId   String
+  student     User     @relation(fields: [studentId], references: [id])
+  quizId      String
+  quiz        Quiz     @relation(fields: [quizId], references: [id])
+  answers     Json
+  score       Int
+  maxScore    Int
+  percentage  Int
+  passed      Boolean
   submittedAt DateTime @default(now())
 
   @@index([studentId, quizId])
+}
+
+model Assignment {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  dueDate     DateTime?
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  submissions AssignmentSubmission[]
+
+  createdAt DateTime @default(now())
+
+  @@index([courseId])
+}
+
+model AssignmentSubmission {
+  id           String     @id @default(cuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id])
+
+  fileUrl     String?
+  answer      String?
+  score       Int?
+  feedback    String?
+  submittedAt DateTime @default(now())
+
+  @@unique([assignmentId, studentId])
+  @@index([studentId])
 }
 
 model Certificate {
@@ -207,27 +321,40 @@ model MemorizationEntry {
 }
 
 model Recitation {
-  id         String   @id @default(cuid())
-  studentId  String
-  student    User     @relation(fields: [studentId], references: [id])
-  audioUrl   String
-  surah      String
-  ayahRange  String
-  feedback   String?
-  reviewedBy String?
+  id          String   @id @default(cuid())
+  studentId   String
+  student     User     @relation(fields: [studentId], references: [id])
+  audioUrl    String
+  surah       String
+  ayahRange   String
+  feedback    String?
+  reviewedBy  String?
   submittedAt DateTime @default(now())
 
   @@index([studentId])
 }
 
+model CourseReview {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  studentId String
+  student   User     @relation(fields: [studentId], references: [id])
+  rating    Int
+  review    String?
+  createdAt DateTime @default(now())
+
+  @@unique([courseId, studentId])
+}
+
 model ForumPost {
-  id        String    @id @default(cuid())
+  id        String         @id @default(cuid())
   title     String
   body      String
   authorId  String
-  author    User      @relation(fields: [authorId], references: [id])
+  author    User           @relation(fields: [authorId], references: [id])
   comments  ForumComment[]
-  createdAt DateTime  @default(now())
+  createdAt DateTime       @default(now())
 }
 
 model ForumComment {
@@ -252,16 +379,16 @@ model Announcement {
 }
 
 model Payment {
-  id          String        @id @default(cuid())
-  reference   String        @unique // Paystack transaction reference
-  studentId   String
-  student     User          @relation(fields: [studentId], references: [id])
-  courseId    String
-  course      Course        @relation(fields: [courseId], references: [id])
-  amountKobo  Int
-  status      PaymentStatus @default(PENDING)
-  paidAt      DateTime?
-  createdAt   DateTime      @default(now())
+  id         String        @id @default(cuid())
+  reference  String        @unique
+  studentId  String
+  student    User          @relation(fields: [studentId], references: [id])
+  courseId   String
+  course     Course        @relation(fields: [courseId], references: [id])
+  amountKobo Int
+  status     PaymentStatus @default(PENDING)
+  paidAt     DateTime?
+  createdAt  DateTime      @default(now())
 
   @@index([studentId])
   @@index([courseId])
@@ -269,7 +396,7 @@ model Payment {
 
 model Badge {
   id          String      @id @default(cuid())
-  code        String      @unique // stable key used by award logic, e.g. "first_lesson"
+  code        String      @unique
   name        String
   description String
   icon        String      @default("★")
@@ -277,13 +404,67 @@ model Badge {
 }
 
 model UserBadge {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  badgeId   String
-  badge     Badge    @relation(fields: [badgeId], references: [id])
-  earnedAt  DateTime @default(now())
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id])
+  badgeId  String
+  badge    Badge    @relation(fields: [badgeId], references: [id])
+  earnedAt DateTime @default(now())
 
   @@unique([userId, badgeId])
   @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  type      String   @default("INFO")
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  senderId   String
+  sender     User     @relation("SenderMessages", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User     @relation("ReceiverMessages", fields: [receiverId], references: [id])
+  message    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  action      String
+  description String?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+model SiteSettings {
+  id                String   @id @default("default")
+  siteName          String   @default("Assurawy Islamic Media")
+  siteTagline       String   @default("Designing Da'wah with Excellence")
+  logoUrl           String   @default("/logo.png")
+  faviconUrl        String?
+  primaryColor      String   @default("#D4AF37")
+  secondaryColor    String   @default("#1B2A4A")
+  fontFamily        String   @default("Inter")
+  defaultLanguage   String   @default("ha")
+  maintenanceMode   Boolean  @default(false)
+  allowRegistration Boolean  @default(true)
+  updatedAt         DateTime @updatedAt
 }

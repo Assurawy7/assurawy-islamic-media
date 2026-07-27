@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateCertificatePdf } from "@/lib/certificate-pdf";
-
+export const dynamic = 'force-dynamic';
 // Public: the PDF only contains the same non-sensitive info as /api/certificates/:id
 // (student name, course, date, certificate number), so no auth is required —
 // consistent with certificates being shareable, verifiable documents.

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-
+export const dynamic = 'force-dynamic';
 type QuestionType = "MULTIPLE_CHOICE" | "SHORT_ANSWER";
 type Question = {
   id?: string;

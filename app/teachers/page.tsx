@@ -1,5 +1,5 @@
 export const metadata = { title: "Teachers — Assurawy Islamic Media" };
-
+export const dynamic = 'force-dynamic';
 const teachers = [
   { name: "Ustadh Ibrahim Sani", role: "Fiqh & Usul al-Fiqh", bio: "Over 12 years teaching Fiqh, with ijazah in the Maliki school and a background in Shari'ah studies." },
   { name: "Ustadha Maryam Bello", role: "Seerah & Islamic History", bio: "Specializes in Seerah studies and the early history of the Muslim community, with a focus on primary sources." },

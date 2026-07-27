@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { StatCard, ProgressBar } from "@/components/dashboard/UI";
-
+export const dynamic = 'force-dynamic';
 type StudentRow = {
   studentId: string;
   name: string;

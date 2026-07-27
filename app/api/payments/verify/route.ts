@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyTransaction } from "@/lib/paystack";
 import { fulfillSuccessfulPayment, markPaymentFailed } from "@/lib/payment-fulfillment";
-
+export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   const reference = req.nextUrl.searchParams.get("reference");
   if (!reference) {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
-
+export const dynamic = 'force-dynamic';
 export async function GET() {
   const session = await requireRole(["ADMIN"]);
   if (!session) {

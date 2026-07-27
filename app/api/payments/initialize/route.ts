@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { initializeTransaction, isPaystackConfigured } from "@/lib/paystack";
 import crypto from "crypto";
-
+export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) {

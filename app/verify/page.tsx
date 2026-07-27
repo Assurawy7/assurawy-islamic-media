@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import IslamicPattern from "@/components/IslamicPattern";
-
+export const dynamic = 'force-dynamic';
 type Result =
   | { valid: true; certificateNo: string; studentName: string; courseTitle: string; issuedAt: string }
   | { valid: false };

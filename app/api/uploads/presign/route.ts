@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/session";
 import { isCloudStorageConfigured, createPresignedUpload } from "@/lib/storage";
-
+export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   const session = await requireRole(["TEACHER", "ADMIN"]);
   if (!session) {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
 import { getOwnedCourse } from "@/lib/course-access";
-
+export const dynamic = 'force-dynamic';
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const session = await requireRole(["TEACHER", "ADMIN"]);
   if (!session) return NextResponse.json({ error: "Forbidden." }, { status: 403 });

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/dashboard/UI";
-
+export const dynamic = 'force-dynamic';
 type Course = {
   id: string;
   title: string;

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import EnrollButton from "@/components/EnrollButton";
 import type { Metadata } from "next";
 import { safeJsonLd } from "@/lib/json-ld";
-
+export const dynamic = 'force-dynamic';
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const course = await prisma.course.findUnique({ where: { id: params.id } });
   if (!course) return { title: "Course — Assurawy Islamic Media" };

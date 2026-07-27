@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
 import { getOwnedCourseByLesson } from "@/lib/course-access";
-
+export const dynamic = 'force-dynamic';
 type QuestionInput = {
   type: "MULTIPLE_CHOICE" | "SHORT_ANSWER";
   prompt: string;

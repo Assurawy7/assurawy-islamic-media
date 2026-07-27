@@ -1,5 +1,5 @@
 import { ArticleCard } from "@/components/Cards";
-
+export const dynamic = 'force-dynamic';
 export const metadata = { title: "Islamic Articles — Assurawy Islamic Media" };
 
 const articles = [

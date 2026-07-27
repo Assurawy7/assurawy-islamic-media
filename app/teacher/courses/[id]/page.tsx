@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { Badge } from "@/components/dashboard/UI";
-
+export const dynamic = 'force-dynamic';
 type Attachment = { id: string; fileName: string; fileUrl: string };
 type Lesson = {
   id: string;

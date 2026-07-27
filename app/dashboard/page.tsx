@@ -3,16 +3,19 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import GamificationPanel from "@/components/dashboard/GamificationPanel";
 import IslamicPattern from "@/components/IslamicPattern";
+import DashboardUserMenu from "@/components/dashboard/DashboardUserMenu";
+import LiveClassesWidget from "@/components/LiveClassesWidget"; // 👈 Sabon Widget din Live Class
 
 export const metadata = { title: "Student Dashboard — Assurawy Islamic Media" };
 
 export default async function DashboardPage() {
-  // Guaranteed non-null: middleware already redirects unauthenticated
-  // visitors to /login before this page ever renders.
   const session = (await getSession())!;
 
   const [user, enrollments, certificates, quizAttempts] = await Promise.all([
-    prisma.user.findUnique({ where: { id: session.sub }, select: { name: true } }),
+    prisma.user.findUnique({
+      where: { id: session.sub },
+      select: { name: true, avatarUrl: true },
+    }),
     prisma.enrollment.findMany({
       where: { studentId: session.sub },
       include: { course: { include: { modules: { include: { lessons: true } } } } },
@@ -49,6 +52,8 @@ export default async function DashboardPage() {
   });
 
   const firstName = (user?.name ?? "").split(" ")[0] || "Student";
+  const fullName = user?.name || "User";
+  const avatarUrl = user?.avatarUrl || null;
 
   return (
     <section className="mx-auto max-w-6xl px-5 py-14 md:px-8">
@@ -59,9 +64,9 @@ export default async function DashboardPage() {
             Assalamu Alaikum, {firstName}
           </h1>
         </div>
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald/10 font-display text-xl font-semibold text-emerald">
-          {firstName[0]?.toUpperCase()}
-        </div>
+
+        {/* PROFILES/AVATAR DROPDOWN MENU */}
+        <DashboardUserMenu userName={fullName} avatarUrl={avatarUrl} />
       </div>
 
       <IslamicPattern className="mb-10 -mt-4" />
@@ -82,6 +87,11 @@ export default async function DashboardPage() {
           <p className="text-xs font-semibold uppercase tracking-wide text-ink/50">Certificates Earned</p>
           <p className="mt-2 font-display text-3xl font-semibold text-deep">{certificates.length}</p>
         </div>
+      </div>
+
+      {/* 🔴 LIVE CLASSES WIDGET */}
+      <div className="mt-10">
+        <LiveClassesWidget userId={session.sub} />
       </div>
 
       {/* ENROLLED COURSES */}

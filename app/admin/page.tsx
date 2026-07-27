@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { StatCard } from "@/components/dashboard/UI";
-
+import HeroHeader from "./HeroHeader";
+export const dynamic = 'force-dynamic';
 type Stats = {
   students: number;
   teachers: number;
@@ -40,7 +41,10 @@ export default function AdminOverviewPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-      {/* 1. ADMIN HEADER BANNER */}
+      {/* 1. HERO HEADER */}
+      <HeroHeader />
+
+      {/* 2. ADMIN HEADER BANNER */}
       <div className="bg-gradient-to-r from-[#1B2A4A] to-[#0B132B] p-6 sm:p-8 rounded-2xl border border-[#D4AF37]/30 shadow-lg text-white">
         <span className="text-xs font-bold text-[#F5D77F] uppercase tracking-widest bg-[#D4AF37]/20 px-3 py-1 rounded-full border border-[#D4AF37]/30">
           Admin Portal
@@ -51,7 +55,7 @@ export default function AdminOverviewPage() {
         </p>
       </div>
 
-      {/* 2. STATS SECTION */}
+      {/* 3. STATS SECTION */}
       {!stats ? (
         <div className="flex items-center gap-3 py-8 text-slate-500 font-medium text-sm">
           <div className="w-4 h-4 border-2 border-[#C5A059] border-t-transparent rounded-full animate-spin" />
@@ -66,8 +70,8 @@ export default function AdminOverviewPage() {
         </div>
       )}
 
-      {/* 3. MANAGEMENT NAVIGATION CARDS */}
-      <div className="grid gap-6 sm:grid-cols-3 pt-2">
+      {/* 4. MANAGEMENT & ANALYTICS NAVIGATION CARDS */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 pt-2">
         <Link 
           href="/admin/courses" 
           className="group bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-[#C5A059] transition-all duration-200"
@@ -110,6 +114,22 @@ export default function AdminOverviewPage() {
           </div>
           <p className="mt-2 text-xs text-slate-500 leading-relaxed">
             Search, verify, issue, or revoke official Qur'an completion certificates.
+          </p>
+        </Link>
+
+        {/* KATIN ANALYTICS DA AKA ƘARA */}
+        <Link 
+          href="/admin/analytics" 
+          className="group bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-[#C5A059] transition-all duration-200"
+        >
+          <div className="flex items-center justify-between">
+            <p className="font-serif text-lg font-bold text-slate-900 group-hover:text-[#C5A059] transition-colors">
+              Analytics
+            </p>
+            <span className="text-[#C5A059] group-hover:translate-x-1 transition-transform">→</span>
+          </div>
+          <p className="mt-2 text-xs text-slate-500 leading-relaxed">
+            View detailed stats, student enrollment growth, and platform performance.
           </p>
         </Link>
       </div>

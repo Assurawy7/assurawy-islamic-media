@@ -1,5 +1,5 @@
 import CourseForm from "@/components/dashboard/CourseForm";
-
+export const dynamic = 'force-dynamic';
 export default function AdminNewCoursePage() {
   return (
     <div>

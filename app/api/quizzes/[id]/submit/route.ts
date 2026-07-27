@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { awardPoints, recordLearningActivity, checkAndAwardBadges, POINTS } from "@/lib/gamification";
-
+export const dynamic = 'force-dynamic';
 type Answers = Record<string, string>;
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { awardPoints, recordLearningActivity, checkAndAwardBadges, POINTS } from "@/lib/gamification";
 import { notifyCertificateIssued } from "@/lib/whatsapp";
-
+export const dynamic = 'force-dynamic';
 export async function POST(_req: Request, { params }: { params: { id: string } }) {
   const session = await getSession();
   if (!session) {

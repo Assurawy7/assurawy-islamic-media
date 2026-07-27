@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword, signSession, SESSION_COOKIE } from "@/lib/auth";
 import { checkRateLimit, clientIp } from "@/lib/rate-limit";
-
+export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   const rate = checkRateLimit(`login:${clientIp(req)}`, { limit: 10, windowMs: 60_000 });
   if (!rate.allowed) {

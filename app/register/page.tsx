@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
+export const dynamic = 'force-dynamic';
 export default function RegisterPage() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);

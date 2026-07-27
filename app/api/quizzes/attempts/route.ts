@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-
+export const dynamic = 'force-dynamic';
 /** The current student's most recent quiz attempts, for the dashboard. */
 export async function GET() {
   const session = await getSession();

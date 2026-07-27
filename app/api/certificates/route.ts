@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-
+export const dynamic = 'force-dynamic';
 export async function GET() {
   const session = await getSession();
   if (!session) {
@@ -10,7 +10,7 @@ export async function GET() {
 
   const certificates = await prisma.certificate.findMany({
     where: { studentId: session.sub },
-    orderBy: { issuedAt: "desc" },
+    orderBy: { issuedAt: "desc" }
   });
 
   return NextResponse.json({ certificates });

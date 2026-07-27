@@ -8,14 +8,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Core Assurawy palette — named, not generic "primary/secondary"
-        ink: "#16261F", // near-black, green-tinted body text
-        deep: "#0E3B2E", // deep emerald — headers, nav, footer
-        emerald: "#1C6B4F", // mid emerald — buttons, links, accents
+        // Dynamic Primary Color don Admin Settings
+        primary: "var(--primary-color)",
+
+        // Core Assurawy palette
+        ink: "#16261F",
+        deep: "#0E3B2E",
+        emerald: "#1C6B4F",
         emeraldLight: "#2E8564",
-        gold: "#C6A15B", // muted gold — never bright yellow
+        gold: "#C6A15B",
         goldLight: "#E4CB8F",
-        cream: "#F8F3E7", // warm background
+        cream: "#F8F3E7",
         parchment: "#F1E9D8",
         sand: "#EFE6D3",
       },

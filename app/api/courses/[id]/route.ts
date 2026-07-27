@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole, getSession } from "@/lib/session";
-
+export const dynamic = 'force-dynamic';
 type Params = { params: { id: string } };
 
 /**

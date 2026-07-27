@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { notifyEnrollment } from "@/lib/whatsapp";
-
+export const dynamic = 'force-dynamic';
 export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSession();
   if (!session) {

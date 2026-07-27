@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { UserPlus, Search, Mail, BookOpen, Award, Calendar, X } from "lucide-react";
-
+export const dynamic = 'force-dynamic';
 export default function StudentsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);

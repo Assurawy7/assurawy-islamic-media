@@ -1,7 +1,7 @@
 import Sidebar, { NavItem } from "@/components/dashboard/Sidebar";
 import IslamicPattern from "@/components/IslamicPattern";
 import { getSession } from "@/lib/session";
-
+export const dynamic = 'force-dynamic';
 const teacherNav: NavItem[] = [
   { href: "/teacher", label: "Overview", icon: "📊" },
   { href: "/teacher/courses", label: "My Courses", icon: "📚" },

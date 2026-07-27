@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
 import { getOwnedCourseByModule } from "@/lib/course-access";
-
+export const dynamic = 'force-dynamic';
 type Params = { params: { id: string } };
 
 export async function PATCH(req: NextRequest, { params }: Params) {

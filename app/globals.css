@@ -3,11 +3,11 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff; /* Tsantsar fari mai haske */
-  --foreground: #0f172a; /* Duhan rubutu domin karatu ya fito fili */
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --primary-color: #D4AF37;
 }
 
-/* Tabbatar da cewa ko da komfutar mutum tana Dark Mode, shafin zai kasance Light Mode */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #ffffff;
@@ -18,4 +18,39 @@
 body {
   color: var(--foreground);
   background-color: var(--background);
+}
+
+/* --- DYNAMIC PRIMARY COLOR UTILITIES --- */
+.bg-primary {
+  background-color: var(--primary-color) !important;
+}
+
+.text-primary {
+  color: var(--primary-color) !important;
+}
+
+.border-primary {
+  border-color: var(--primary-color) !important;
+}
+
+.hover\:text-primary:hover {
+  color: var(--primary-color) !important;
+}
+
+.hover\:bg-primary:hover {
+  background-color: var(--primary-color) !important;
+}
+
+.hover\:border-primary:hover {
+  border-color: var(--primary-color) !important;
+}
+
+.selection\:bg-primary::selection {
+  background-color: var(--primary-color) !important;
+}
+
+/* --- ARABIC FONT UTILITY --- */
+/* Wannan zai tabbatar da cewa 'font-arabic' yana amfani da font variable din Amiri da aka saka a layout */
+.font-arabic {
+  font-family: var(--font-amiri), serif !important;
 }

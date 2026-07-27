@@ -9,7 +9,7 @@ import {
   Wallet,
   Target,
 } from "lucide-react";
-
+export const dynamic = 'force-dynamic';
 async function getAnalyticsData() {
   const [
     students,
