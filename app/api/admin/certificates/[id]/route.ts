@@ -1,36 +1,111 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+type Context = {
+  params: {
+    id: string;
+  };
+};
+
+
+// GET SINGLE CERTIFICATE
+export async function GET(
+  req: NextRequest,
+  context: Context
 ) {
   try {
-    const session = await getSession();
-    if (!session || session.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+
+    const { id } = context.params;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Certificate ID required" },
+        { status: 400 }
+      );
     }
 
-    const resolvedParams = await Promise.resolve(params);
-    const certificateId = resolvedParams?.id;
 
-    if (!certificateId) {
-      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
-    }
-
-    await prisma.certificate.delete({
-      where: { id: certificateId },
+    const certificate = await prisma.certificate.findUnique({
+      where:{
+        id
+      },
+      include:{
+        student:true
+      }
     });
 
-    return NextResponse.json({ ok: true });
-  } catch (error: any) {
+
+    if(!certificate){
+      return NextResponse.json(
+        {error:"Certificate not found"},
+        {status:404}
+      );
+    }
+
+
+    return NextResponse.json({
+      certificate
+    });
+
+
+  } catch(error){
+
+    console.error(error);
+
     return NextResponse.json(
-      { ok: false, error: error?.message || "Failed to delete" },
-      { status: 500 }
+      {
+        error:"Failed to fetch certificate"
+      },
+      {
+        status:500
+      }
     );
+
   }
+}
+
+
+
+// DELETE CERTIFICATE
+
+export async function DELETE(
+  req: NextRequest,
+  context: Context
+){
+
+  try{
+
+    const {id}=context.params;
+
+
+    await prisma.certificate.delete({
+      where:{
+        id
+      }
+    });
+
+
+    return NextResponse.json({
+      success:true
+    });
+
+
+  }catch(error){
+
+    console.error(error);
+
+
+    return NextResponse.json(
+      {
+        success:false,
+        error:"Failed to delete certificate"
+      },
+      {
+        status:500
+      }
+    );
+
+  }
+
 }

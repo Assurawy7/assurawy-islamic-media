@@ -29,7 +29,7 @@ export async function GET() {
         bio: true,
         image: true,
         certificates: true,
-        quizScores: true,
+        
       },
     });
 

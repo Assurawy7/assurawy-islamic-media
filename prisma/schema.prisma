@@ -1,5 +1,3 @@
-// Assurawy Islamic Media — Database Schema
-
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]
@@ -10,118 +8,78 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  ADMIN
-  TEACHER
-  STUDENT
-}
-
-enum QuestionType {
-  MULTIPLE_CHOICE
-  SHORT_ANSWER
-}
-
-enum PaymentStatus {
-  PENDING
-  SUCCESS
-  FAILED
-}
-
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  phone        String?
-  passwordHash String
-  role         Role     @default(STUDENT)
-  bio          String?
-  avatarUrl    String?
-  image        String?  
-  quizScores   Json?    // <--- An kara fagen quizScores anan don gyara kuskuren build
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  // Gamification
-  points         Int       @default(0)
-  currentStreak  Int       @default(0)
-  longestStreak  Int       @default(0)
-  lastActivityAt DateTime?
-
-  // Teacher relations
-  coursesTaught Course[]    @relation("TeacherCourses")
-  liveClasses   LiveClass[] @relation("TeacherLiveClasses")
-
-  // Student relations
-  enrollments           Enrollment[]
-  quizAttempts          QuizAttempt[]
-  certificates          Certificate[]
-  lessonProgress        LessonProgress[]
-  memorization          MemorizationEntry[]
-  recitations           Recitation[]
-  liveAttendances       LiveAttendance[]
+  id                    String                 @id @default(cuid())
+  name                  String
+  email                 String                 @unique
+  phone                 String?
+  passwordHash          String
+  role                  Role                   @default(STUDENT)
+  bio                   String?
+  avatarUrl             String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  points                Int                    @default(0)
+  currentStreak         Int                    @default(0)
+  longestStreak         Int                    @default(0)
+  lastActivityAt        DateTime?
+  image                 String?
+  activityLogs          ActivityLog[]
+  announcements         Announcement[]         @relation("AnnouncementAuthor")
   assignmentSubmissions AssignmentSubmission[]
-
-  // Community
-  forumPosts    ForumPost[]
-  forumComments ForumComment[]
-  announcements Announcement[] @relation("AnnouncementAuthor")
-
-  // Finance
-  payments Payment[]
-
-  // Badges
-  badges UserBadge[]
-
-  // Notifications & Messages
-  notifications    Notification[]
-  messagesSent     Message[]      @relation("SenderMessages")
-  messagesReceived Message[]      @relation("ReceiverMessages")
-
-  // Activity & Reviews
-  activityLogs  ActivityLog[]
-  courseReviews CourseReview[]
+  certificates          Certificate[]
+  coursesTaught         Course[]               @relation("TeacherCourses")
+  courseReviews         CourseReview[]
+  enrollments           Enrollment[]
+  forumComments         ForumComment[]
+  forumPosts            ForumPost[]
+  lessonProgress        LessonProgress[]
+  liveAttendances       LiveAttendance[]
+  liveClasses           LiveClass[]            @relation("TeacherLiveClasses")
+  memorization          MemorizationEntry[]
+  messagesReceived      Message[]              @relation("ReceiverMessages")
+  messagesSent          Message[]              @relation("SenderMessages")
+  notifications         Notification[]
+  payments              Payment[]
+  quizAttempts          QuizAttempt[]
+  recitations           Recitation[]
+  badges                UserBadge[]
 
   @@index([role])
 }
 
 model Course {
-  id           String  @id @default(cuid())
-  slug         String  @unique
+  id           String          @id @default(cuid())
+  slug         String          @unique
   title        String
   description  String
-  level        String  @default("Foundational")
+  level        String          @default("Foundational")
   thumbnailUrl String?
-  published    Boolean @default(false)
-  priceKobo    Int     @default(0)
-
-  teacherId String
-  teacher   User   @relation("TeacherCourses", fields: [teacherId], references: [id])
-
-  categoryId String?
-  category   CourseCategory? @relation(fields: [categoryId], references: [id])
-
-  modules     Module[]
-  enrollments Enrollment[]
-  payments    Payment[]
-  liveClasses LiveClass[]
-  reviews     CourseReview[]
-  assignments Assignment[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  published    Boolean         @default(false)
+  priceKobo    Int             @default(0)
+  teacherId    String
+  categoryId   String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  assignments  Assignment[]
+  category     CourseCategory? @relation(fields: [categoryId], references: [id])
+  teacher      User            @relation("TeacherCourses", fields: [teacherId], references: [id])
+  reviews      CourseReview[]
+  enrollments  Enrollment[]
+  liveClasses  LiveClass[]
+  modules      Module[]
+  payments     Payment[]
 
   @@index([teacherId])
   @@index([categoryId])
 }
 
 model CourseCategory {
-  id          String  @id @default(cuid())
-  name        String  @unique
+  id          String   @id @default(cuid())
+  name        String   @unique
   description String?
-
-  courses Course[]
-
-  createdAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  courses     Course[]
 }
 
 model Module {
@@ -129,8 +87,8 @@ model Module {
   title    String
   order    Int
   courseId String
-  course   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessons  Lesson[]
+  course   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@index([courseId])
 }
@@ -142,10 +100,10 @@ model Lesson {
   videoUrl    String?
   content     String?
   moduleId    String
-  module      Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   attachments Attachment[]
-  quiz        Quiz?
+  module      Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   progress    LessonProgress[]
+  quiz        Quiz?
 
   @@index([moduleId])
 }
@@ -163,10 +121,10 @@ model Attachment {
 model Enrollment {
   id         String   @id @default(cuid())
   studentId  String
-  student    User     @relation(fields: [studentId], references: [id])
   courseId   String
-  course     Course   @relation(fields: [courseId], references: [id])
   enrolledAt DateTime @default(now())
+  course     Course   @relation(fields: [courseId], references: [id])
+  student    User     @relation(fields: [studentId], references: [id])
 
   @@unique([studentId, courseId])
   @@index([courseId])
@@ -175,34 +133,30 @@ model Enrollment {
 model LessonProgress {
   id          String   @id @default(cuid())
   studentId   String
-  student     User     @relation(fields: [studentId], references: [id])
   lessonId    String
-  lesson      Lesson   @relation(fields: [lessonId], references: [id])
   completedAt DateTime @default(now())
+  lesson      Lesson   @relation(fields: [lessonId], references: [id])
+  student     User     @relation(fields: [studentId], references: [id])
 
   @@unique([studentId, lessonId])
 }
 
 model LiveClass {
-  id          String   @id @default(cuid())
+  id          String           @id @default(cuid())
   title       String
   description String?
   meetingUrl  String
-  platform    String   @default("ZOOM")
-  scheduledAt DateTime 
-  duration    Int      @default(60) 
-  status      String   @default("UPCOMING")
-
-  teacherId String
-  teacher   User   @relation("TeacherLiveClasses", fields: [teacherId], references: [id])
-
-  courseId String?
-  course   Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
-
+  scheduledAt DateTime
+  courseId    String?
+  teacherId   String
+  createdAt   DateTime         @default(now())
+  status      String           @default("UPCOMING")
+  duration    Int              @default(60)
+  platform    String           @default("ZOOM")
+  updatedAt   DateTime         @updatedAt
   attendances LiveAttendance[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  course      Course?          @relation(fields: [courseId], references: [id])
+  teacher     User             @relation("TeacherLiveClasses", fields: [teacherId], references: [id])
 
   @@index([teacherId])
   @@index([courseId])
@@ -211,14 +165,12 @@ model LiveClass {
 model LiveAttendance {
   id          String    @id @default(cuid())
   liveClassId String
+  studentId   String
+  joinedAt    DateTime  @default(now())
+  leftAt      DateTime?
+  duration    Int       @default(0)
   liveClass   LiveClass @relation(fields: [liveClassId], references: [id], onDelete: Cascade)
-
-  studentId String
-  student   User   @relation(fields: [studentId], references: [id])
-
-  joinedAt DateTime  @default(now())
-  leftAt   DateTime?
-  duration Int       @default(0)
+  student     User      @relation(fields: [studentId], references: [id])
 
   @@unique([liveClassId, studentId])
   @@index([studentId])
@@ -229,21 +181,21 @@ model Quiz {
   title        String
   passingScore Int           @default(60)
   lessonId     String        @unique
-  lesson       Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   questions    Question[]
+  lesson       Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   attempts     QuizAttempt[]
 }
 
 model Question {
   id            String       @id @default(cuid())
   quizId        String
-  quiz          Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
   type          QuestionType
   prompt        String
   options       Json?
   correctAnswer String
   points        Int          @default(1)
   order         Int
+  quiz          Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
   @@index([quizId])
 }
@@ -251,31 +203,28 @@ model Question {
 model QuizAttempt {
   id          String   @id @default(cuid())
   studentId   String
-  student     User     @relation(fields: [studentId], references: [id])
   quizId      String
-  quiz        Quiz     @relation(fields: [quizId], references: [id])
   answers     Json
   score       Int
   maxScore    Int
   percentage  Int
   passed      Boolean
   submittedAt DateTime @default(now())
+  quiz        Quiz     @relation(fields: [quizId], references: [id])
+  student     User     @relation(fields: [studentId], references: [id])
 
   @@index([studentId, quizId])
 }
 
 model Assignment {
-  id          String    @id @default(cuid())
+  id          String                 @id @default(cuid())
   title       String
   description String?
   dueDate     DateTime?
-
-  courseId String
-  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
+  courseId    String
+  createdAt   DateTime               @default(now())
+  course      Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
   submissions AssignmentSubmission[]
-
-  createdAt DateTime @default(now())
 
   @@index([courseId])
 }
@@ -283,16 +232,14 @@ model Assignment {
 model AssignmentSubmission {
   id           String     @id @default(cuid())
   assignmentId String
+  studentId    String
+  fileUrl      String?
+  answer       String?
+  score        Int?
+  feedback     String?
+  submittedAt  DateTime   @default(now())
   assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-
-  studentId String
-  student   User   @relation(fields: [studentId], references: [id])
-
-  fileUrl     String?
-  answer      String?
-  score       Int?
-  feedback    String?
-  submittedAt DateTime @default(now())
+  student      User       @relation(fields: [studentId], references: [id])
 
   @@unique([assignmentId, studentId])
   @@index([studentId])
@@ -302,9 +249,9 @@ model Certificate {
   id            String   @id @default(cuid())
   certificateNo String   @unique
   studentId     String
-  student       User     @relation(fields: [studentId], references: [id])
   courseTitle   String
   issuedAt      DateTime @default(now())
+  student       User     @relation(fields: [studentId], references: [id])
 
   @@index([studentId])
 }
@@ -312,10 +259,10 @@ model Certificate {
 model MemorizationEntry {
   id         String   @id @default(cuid())
   studentId  String
-  student    User     @relation(fields: [studentId], references: [id])
   juzNumber  Int
   percentage Int      @default(0)
   updatedAt  DateTime @updatedAt
+  student    User     @relation(fields: [studentId], references: [id])
 
   @@unique([studentId, juzNumber])
 }
@@ -323,13 +270,13 @@ model MemorizationEntry {
 model Recitation {
   id          String   @id @default(cuid())
   studentId   String
-  student     User     @relation(fields: [studentId], references: [id])
   audioUrl    String
   surah       String
   ayahRange   String
   feedback    String?
   reviewedBy  String?
   submittedAt DateTime @default(now())
+  student     User     @relation(fields: [studentId], references: [id])
 
   @@index([studentId])
 }
@@ -337,12 +284,12 @@ model Recitation {
 model CourseReview {
   id        String   @id @default(cuid())
   courseId  String
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   studentId String
-  student   User     @relation(fields: [studentId], references: [id])
   rating    Int
   review    String?
   createdAt DateTime @default(now())
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student   User     @relation(fields: [studentId], references: [id])
 
   @@unique([courseId, studentId])
 }
@@ -352,19 +299,19 @@ model ForumPost {
   title     String
   body      String
   authorId  String
-  author    User           @relation(fields: [authorId], references: [id])
-  comments  ForumComment[]
   createdAt DateTime       @default(now())
+  comments  ForumComment[]
+  author    User           @relation(fields: [authorId], references: [id])
 }
 
 model ForumComment {
   id        String    @id @default(cuid())
   body      String
   postId    String
-  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
   authorId  String
-  author    User      @relation(fields: [authorId], references: [id])
   createdAt DateTime  @default(now())
+  author    User      @relation(fields: [authorId], references: [id])
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@index([postId])
 }
@@ -374,21 +321,21 @@ model Announcement {
   title     String
   body      String
   authorId  String
-  author    User     @relation("AnnouncementAuthor", fields: [authorId], references: [id])
   createdAt DateTime @default(now())
+  author    User     @relation("AnnouncementAuthor", fields: [authorId], references: [id])
 }
 
 model Payment {
   id         String        @id @default(cuid())
   reference  String        @unique
   studentId  String
-  student    User          @relation(fields: [studentId], references: [id])
   courseId   String
-  course     Course        @relation(fields: [courseId], references: [id])
   amountKobo Int
   status     PaymentStatus @default(PENDING)
   paidAt     DateTime?
   createdAt  DateTime      @default(now())
+  course     Course        @relation(fields: [courseId], references: [id])
+  student    User          @relation(fields: [studentId], references: [id])
 
   @@index([studentId])
   @@index([courseId])
@@ -406,10 +353,10 @@ model Badge {
 model UserBadge {
   id       String   @id @default(cuid())
   userId   String
-  user     User     @relation(fields: [userId], references: [id])
   badgeId  String
-  badge    Badge    @relation(fields: [badgeId], references: [id])
   earnedAt DateTime @default(now())
+  badge    Badge    @relation(fields: [badgeId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, badgeId])
   @@index([userId])
@@ -418,12 +365,12 @@ model UserBadge {
 model Notification {
   id        String   @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
   title     String
   message   String
   type      String   @default("INFO")
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
 }
@@ -431,12 +378,12 @@ model Notification {
 model Message {
   id         String   @id @default(cuid())
   senderId   String
-  sender     User     @relation("SenderMessages", fields: [senderId], references: [id])
   receiverId String
-  receiver   User     @relation("ReceiverMessages", fields: [receiverId], references: [id])
   message    String
   isRead     Boolean  @default(false)
   createdAt  DateTime @default(now())
+  receiver   User     @relation("ReceiverMessages", fields: [receiverId], references: [id])
+  sender     User     @relation("SenderMessages", fields: [senderId], references: [id])
 
   @@index([senderId])
   @@index([receiverId])
@@ -445,11 +392,11 @@ model Message {
 model ActivityLog {
   id          String   @id @default(cuid())
   userId      String?
-  user        User?    @relation(fields: [userId], references: [id])
   action      String
   description String?
   ipAddress   String?
   createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [id])
 
   @@index([userId])
 }
@@ -467,4 +414,21 @@ model SiteSettings {
   maintenanceMode   Boolean  @default(false)
   allowRegistration Boolean  @default(true)
   updatedAt         DateTime @updatedAt
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  SHORT_ANSWER
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
 }
