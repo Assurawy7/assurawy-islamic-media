@@ -1,0 +1,175 @@
+export const SUPPORTED_LANGS = ["ha", "ar", "en"] as const;
+export type Lang = (typeof SUPPORTED_LANGS)[number];
+
+export function isSupportedLang(value: unknown): value is Lang {
+  return typeof value === "string" && (SUPPORTED_LANGS as readonly string[]).includes(value);
+}
+
+export const LANG_LABELS: Record<Lang, string> = {
+  ha: "Hausa",
+  ar: "العربية",
+  en: "English",
+};
+
+export const RTL_LANGS: readonly Lang[] = ["ar"];
+
+/**
+ * Site-wide dictionary. Keys are grouped by area (nav/footer keys came from
+ * the original layout dictionary; dashboard/quiz/notification/common keys
+ * are additions for the multi-language rollout). Add new keys here — every
+ * consumer (server layout, LanguageProvider, LanguageSwitcher) reads from
+ * this single source so nothing can drift out of sync between languages.
+ */
+export const translations: Record<Lang, Record<string, string>> = {
+  en: {
+    // Nav / footer (pre-existing)
+    slogan: "Empowering Minds through Divine Wisdom",
+    dashboard: "Dashboard",
+    support: "Support & Inquiries",
+    home: "Home",
+    academy: "Academy",
+    courses: "Courses",
+    mission: "Our Mission",
+    contact: "Contact",
+    footerDesc:
+      "Nurturing hearts and illuminating minds through classical Islamic sciences, Tajweed, and authentic Qur'anic memorization.",
+    navTitle: "Navigation",
+    academicTitle: "Academic Offerings",
+    touchTitle: "Get In Touch",
+    tajweed: "Tajweed & Precise Recitation",
+    memorization: "Qur'an Memorization (Hifz)",
+    tafseer: "Tafseer & Classical Arabic",
+    portal: "Student Portal",
+    rights: "Islamic Media & Qur'an Academy. All rights reserved.",
+    // Common actions
+    save: "Save",
+    cancel: "Cancel",
+    submit: "Submit",
+    loading: "Loading…",
+    login: "Log In",
+    logout: "Log Out",
+    register: "Register",
+    language: "Language",
+    // Quiz
+    startQuiz: "Start Quiz",
+    submitQuiz: "Submit Quiz",
+    submitting: "Submitting…",
+    timeUp: "Time ran out — submitted automatically.",
+    passed: "Passed",
+    notPassed: "Not passed",
+    tryAgain: "Try again",
+    studentRanking: "Student Ranking",
+    quizHistory: "Quiz History",
+    // Notifications
+    newLesson: "New lesson available",
+    newAssignment: "New assignment posted",
+    quizResult: "Your quiz result",
+    certificateIssued: "Certificate issued",
+    notifications: "Notifications",
+    // Dashboard
+    myCourses: "My Courses",
+    myProgress: "My Progress",
+    assignments: "Assignments",
+    lessons: "Lessons",
+    certificates: "Certificates",
+    messages: "Messages",
+  },
+  ha: {
+    slogan: "Akan Tassoshi da Ilimin Rarrabuwa na Ubangiji",
+    dashboard: "Shafin Salo",
+    support: "Taimako da Tambayoyi",
+    home: "Babban Shafi",
+    academy: "Cibiyar Ilimi",
+    courses: "Bangarorin Karatu",
+    mission: "Manufar Mu",
+    contact: "Tuntubemu",
+    footerDesc: "Gini da bunkasa zukata da ilimukan Musulunci, Haddar Al-Qur'ani mai girma da Tajwidi.",
+    navTitle: "Hanyoyin Shafi",
+    academicTitle: "Bangarorin Ilimi",
+    touchTitle: "Tuntube Mu",
+    tajweed: "Tajwidi da Karatu Mai Kyau",
+    memorization: "Haddar Al-Qur'ani Mai Girma",
+    tafseer: "Tafsiri da Harshen Larabci",
+    portal: "Dandalin Dalibai",
+    rights: "Cibiyar Ilimin Musulunci da Al-Qur'ani. Dukkan hakki na karewa.",
+    save: "Ajiye",
+    cancel: "Soke",
+    submit: "Aikawa",
+    loading: "Ana lodi…",
+    login: "Shiga",
+    logout: "Fita",
+    register: "Yi Rajista",
+    language: "Harshe",
+    startQuiz: "Fara Jarabawa",
+    submitQuiz: "Mika Jarabawa",
+    submitting: "Ana mikawa…",
+    timeUp: "Lokaci ya kare — an mika ta atomatik.",
+    passed: "Ka Ci",
+    notPassed: "Ba Ka Ci Ba",
+    tryAgain: "Sake gwadawa",
+    studentRanking: "Matsayin Dalibai",
+    quizHistory: "Tarihin Jarabawa",
+    newLesson: "Sabon darasi ya samu",
+    newAssignment: "Sabon aikin gida",
+    quizResult: "Sakamakon jarabawarka",
+    certificateIssued: "An bayar da takardar shaida",
+    notifications: "Sanarwa",
+    myCourses: "Karatuna",
+    myProgress: "Ci gabana",
+    assignments: "Ayyukan Gida",
+    lessons: "Darussa",
+    certificates: "Takardun Shaida",
+    messages: "Sakonni",
+  },
+  ar: {
+    slogan: "تمكين العقول من خلال الحكمة الإلهية",
+    dashboard: "لوحة التحكم",
+    support: "الدعم والاستفسارات",
+    home: "الرئيسية",
+    academy: "الأكاديمية",
+    courses: "الدورات",
+    mission: "مهمتنا",
+    contact: "اتصل بنا",
+    footerDesc: "تغذية القلوب وإنارة العقول من خلال العلوم الإسلامية الكلاسيكية والتجويد وحفظ القرآن الكريم.",
+    navTitle: "التنقل",
+    academicTitle: "العروض الأكاديمية",
+    touchTitle: "تواصل معنا",
+    tajweed: "التجويد والتلاوة الدقيقة",
+    memorization: "حفظ القرآن الكريم",
+    tafseer: "التفسير واللغة العربية الكلاسيكية",
+    portal: "بوابة الطلاب",
+    rights: "أكاديمية الإعلام الإسلامي والقرآن الكريم. جميع الحقوق محفوظة.",
+    save: "حفظ",
+    cancel: "إلغاء",
+    submit: "إرسال",
+    loading: "جارٍ التحميل…",
+    login: "تسجيل الدخول",
+    logout: "تسجيل الخروج",
+    register: "التسجيل",
+    language: "اللغة",
+    startQuiz: "بدء الاختبار",
+    submitQuiz: "إرسال الاختبار",
+    submitting: "جارٍ الإرسال…",
+    timeUp: "انتهى الوقت — تم الإرسال تلقائيًا.",
+    passed: "ناجح",
+    notPassed: "غير ناجح",
+    tryAgain: "حاول مرة أخرى",
+    studentRanking: "ترتيب الطلاب",
+    quizHistory: "سجل الاختبارات",
+    newLesson: "درس جديد متاح",
+    newAssignment: "تم نشر واجب جديد",
+    quizResult: "نتيجة اختبارك",
+    certificateIssued: "تم إصدار الشهادة",
+    notifications: "الإشعارات",
+    myCourses: "دوراتي",
+    myProgress: "تقدمي",
+    assignments: "الواجبات",
+    lessons: "الدروس",
+    certificates: "الشهادات",
+    messages: "الرسائل",
+  },
+};
+
+export function getDictionary(lang: string): Record<string, string> {
+  return translations[isSupportedLang(lang) ? lang : "ha"];
+}

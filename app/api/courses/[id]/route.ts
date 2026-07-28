@@ -72,6 +72,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
                 order: l.order,
                 moduleId: l.moduleId,
                 videoUrl: null,
+                audioUrl: null,
                 content: null,
                 attachments: [],
                 quiz: l.quiz,

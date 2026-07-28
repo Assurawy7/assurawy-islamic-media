@@ -26,12 +26,22 @@ export async function POST(req: NextRequest) {
     "image/jpeg",
     "image/jpg",
     "image/webp",
-    "image/svg+xml"
+    "image/svg+xml",
+    // Audio — for Islamic lesson recordings (Qur'an recitation, lectures, etc.)
+    "audio/mpeg",
+    "audio/mp3",
+    "audio/wav",
+    "audio/x-wav",
+    "audio/ogg",
+    "audio/webm",
+    "audio/mp4",
+    "audio/x-m4a",
+    "audio/aac",
   ];
 
   if (!allowed.includes(file.type)) {
     return NextResponse.json(
-      { error: "Kawai Hotuna (PNG/JPG/WEBP), PDF, ko Bidiyo ake yarda da su." },
+      { error: "Kawai Hotuna (PNG/JPG/WEBP), PDF, Bidiyo, ko Sauti (Audio) ake yarda da su." },
       { status: 415 }
     );
   }

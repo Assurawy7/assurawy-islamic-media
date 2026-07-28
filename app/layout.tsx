@@ -1,9 +1,14 @@
 import "./globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display, Fira_Code, Cinzel, Amiri } from "next/font/google";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import HeaderActions from "@/components/headerActions";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import { isSupportedLang, type Lang } from "@/lib/i18n";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -47,67 +52,26 @@ const amiri = Amiri({
 export const metadata: Metadata = {
   title: "Assurawy | Premier Islamic & Qur'an Academy",
   description: "Authentic Qur'anic studies, Tajweed, Tafseer, and classical Islamic learning for discerning students.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Assurawy",
+  },
+  icons: {
+    icon: [
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/favicon-16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: "/icons/apple-touch-icon.png",
+  },
 };
 
-const translations: Record<string, any> = {
-  en: {
-    slogan: "Empowering Minds through Divine Wisdom",
-    dashboard: "Dashboard",
-    support: "Support & Inquiries",
-    home: "Home",
-    academy: "Academy",
-    courses: "Courses",
-    mission: "Our Mission",
-    contact: "Contact",
-    footerDesc: "Nurturing hearts and illuminating minds through classical Islamic sciences, Tajweed, and authentic Qur'anic memorization.",
-    navTitle: "Navigation",
-    academicTitle: "Academic Offerings",
-    touchTitle: "Get In Touch",
-    tajweed: "Tajweed & Precise Recitation",
-    memorization: "Qur'an Memorization (Hifz)",
-    tafseer: "Tafseer & Classical Arabic",
-    portal: "Student Portal",
-    rights: "Islamic Media & Qur'an Academy. All rights reserved.",
-  },
-  ha: {
-    slogan: "Akan Tassoshi da Ilimin Rarrabuwa na Ubangiji",
-    dashboard: "Shafin Salo",
-    support: "Taimako da Tambayoyi",
-    home: "Babban Shafi",
-    academy: "Cibiyar Ilimi",
-    courses: "Bangarorin Karatu",
-    mission: "Manufar Mu",
-    contact: "Tuntubemu",
-    footerDesc: "Gini da bunkasa zukata da ilimukan Musulunci, Haddar Al-Qur'ani mai girma da Tajwidi.",
-    navTitle: "Hanyoyin Shafi",
-    academicTitle: "Bangarorin Ilimi",
-    touchTitle: "Tuntube Mu",
-    tajweed: "Tajwidi da Karatu Mai Kyau",
-    memorization: "Haddar Al-Qur'ani Mai Girma",
-    tafseer: "Tafsiri da Harshen Larabci",
-    portal: "Dandalin Dalibai",
-    rights: "Cibiyar Ilimin Musulunci da Al-Qur'ani. Dukkan hakki na karewa.",
-  },
-  ar: {
-    slogan: "تمكين العقول من خلال الحكمة الإلهية",
-    dashboard: "لوحة التحكم",
-    support: "الدعم والاستفسارات",
-    home: "الرئيسية",
-    academy: "الأكاديمية",
-    courses: "الدورات",
-    mission: "مهمتنا",
-    contact: "اتصل بنا",
-    footerDesc: "تغذية القلوب وإنارة العقول من خلال العلوم الإسلامية الكلاسيكية والجويد وحفظ القرآن الكريم.",
-    navTitle: "التنقل",
-    academicTitle: "العروض الأكاديمية",
-    touchTitle: "تواصل معنا",
-    tajweed: "التجويد والتلاوة الدقيقة",
-    memorization: "حفظ القرآن الكريم",
-    tafseer: "التفسير واللغة العربية الكلاسيكية",
-    portal: "بوابة الطلاب",
-    rights: "أكاديمية الإعلام الإسلامي والقرآن الكريم. جميع الحقوق محفوظة.",
-  },
+export const viewport: Viewport = {
+  themeColor: "#0E3B2E",
 };
+
+import { getDictionary } from "@/lib/i18n";
 
 export default async function RootLayout({
   children,
@@ -125,10 +89,24 @@ export default async function RootLayout({
   }
 
   const primaryColor = settings?.primaryColor || "#D4AF37";
-  const defaultLang = settings?.defaultLang || "ha";
+
+  // Language priority: explicit cookie choice (set by LanguageSwitcher) >
+  // the logged-in user's saved preference > the admin's site-wide default.
+  const cookieLang = cookies().get("lang")?.value;
+  let resolvedLang: string | undefined = isSupportedLang(cookieLang) ? cookieLang : undefined;
+
+  if (!resolvedLang) {
+    const session = await getSession();
+    if (session) {
+      const user = await prisma.user.findUnique({ where: { id: session.sub }, select: { language: true } });
+      if (isSupportedLang(user?.language)) resolvedLang = user!.language;
+    }
+  }
+
+  const defaultLang: Lang = (resolvedLang as Lang) || (isSupportedLang(settings?.defaultLanguage) ? settings.defaultLanguage : "ha");
   const isRtl = defaultLang === "ar";
 
-  const t = translations[defaultLang] || translations.ha;
+  const t = getDictionary(defaultLang);
 
   return (
     <html 
@@ -142,6 +120,9 @@ export default async function RootLayout({
         suppressHydrationWarning
         className="font-sans text-slate-800 bg-slate-50 antialiased min-h-screen flex flex-col selection:bg-amber-100 selection:text-amber-900"
       >
+        <ServiceWorkerRegister />
+        <LanguageProvider initialLang={defaultLang}>
+
         {/* 1. TOP ANNOUNCEMENT BAR */}
         <div className="bg-gradient-to-r from-slate-100 via-amber-50 to-slate-100 border-b border-slate-200/80 text-[11px] font-medium tracking-wider">
           <div className="max-w-7xl mx-auto px-4 sm:px-8 py-2 flex items-center justify-between">
@@ -170,7 +151,7 @@ export default async function RootLayout({
               <div className="relative p-[1.5px] rounded-2xl shadow-sm group-hover:shadow-md transition-all duration-300 bg-primary">
                 <div className="w-11 h-11 bg-slate-900 rounded-[14px] flex items-center justify-center text-white font-bold text-xl group-hover:scale-[0.98] transition-transform overflow-hidden relative">
                   <img
-                    src={settings?.siteLogo || "/logo.png"}
+                    src={settings?.logoUrl || "/logo.png"}
                     alt={settings?.siteName || "Logo"}
                     className="w-full h-full object-cover"
                   />
@@ -259,6 +240,7 @@ export default async function RootLayout({
             <p>© {new Date().getFullYear()} {settings?.siteName || "Assurawy"} {t.rights}</p>
           </div>
         </footer>
+        </LanguageProvider>
       </body>
     </html>
   );

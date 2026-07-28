@@ -24,6 +24,8 @@ model User {
   longestStreak         Int                    @default(0)
   lastActivityAt        DateTime?
   image                 String?
+  language              String                 @default("ha")
+  whatsappOptIn         Boolean                @default(true)
   activityLogs          ActivityLog[]
   announcements         Announcement[]         @relation("AnnouncementAuthor")
   assignmentSubmissions AssignmentSubmission[]
@@ -98,6 +100,7 @@ model Lesson {
   title       String
   order       Int
   videoUrl    String?
+  audioUrl    String?
   content     String?
   moduleId    String
   attachments Attachment[]
@@ -177,10 +180,11 @@ model LiveAttendance {
 }
 
 model Quiz {
-  id           String        @id @default(cuid())
-  title        String
-  passingScore Int           @default(60)
-  lessonId     String        @unique
+  id              String        @id @default(cuid())
+  title           String
+  passingScore    Int           @default(60)
+  timeLimitMinutes Int?
+  lessonId        String        @unique
   questions    Question[]
   lesson       Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   attempts     QuizAttempt[]
@@ -201,15 +205,17 @@ model Question {
 }
 
 model QuizAttempt {
-  id          String   @id @default(cuid())
-  studentId   String
-  quizId      String
-  answers     Json
-  score       Int
-  maxScore    Int
-  percentage  Int
-  passed      Boolean
-  submittedAt DateTime @default(now())
+  id              String   @id @default(cuid())
+  studentId       String
+  quizId          String
+  answers         Json
+  score           Int
+  maxScore        Int
+  percentage      Int
+  passed          Boolean
+  timeTakenSeconds Int?
+  autoSubmitted   Boolean  @default(false)
+  submittedAt     DateTime @default(now())
   quiz        Quiz     @relation(fields: [quizId], references: [id])
   student     User     @relation(fields: [studentId], references: [id])
 
@@ -411,6 +417,8 @@ model SiteSettings {
   secondaryColor    String   @default("#1B2A4A")
   fontFamily        String   @default("Inter")
   defaultLanguage   String   @default("ha")
+  supportEmail      String?
+  emailNotifications Boolean @default(true)
   maintenanceMode   Boolean  @default(false)
   allowRegistration Boolean  @default(true)
   updatedAt         DateTime @updatedAt

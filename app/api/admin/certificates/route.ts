@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/session";
+import { notifyCertificateIssued } from "@/lib/whatsapp";
 
+export const dynamic = "force-dynamic";
 
 // GET ALL CERTIFICATES
 export async function GET(req: NextRequest) {
+  const session = await requireRole(["ADMIN"]);
+  if (!session) {
+    return NextResponse.json({ error: "Not authorized." }, { status: 401 });
+  }
+
   try {
 
     const certificates = await prisma.certificate.findMany({
@@ -40,6 +48,10 @@ export async function GET(req: NextRequest) {
 
 // CREATE CERTIFICATE
 export async function POST(req: NextRequest) {
+  const session = await requireRole(["ADMIN"]);
+  if (!session) {
+    return NextResponse.json({ error: "Not authorized." }, { status: 401 });
+  }
 
   try {
 
@@ -76,6 +88,18 @@ export async function POST(req: NextRequest) {
 
     });
 
+    // Fire-and-forget WhatsApp notification — never blocks the response
+    // or fails the request if WhatsApp isn't configured / errors out.
+    prisma.user
+      .findUnique({ where: { id: studentId }, select: { name: true, phone: true } })
+      .then((student) => {
+        if (student?.phone) {
+          notifyCertificateIssued(student.phone, student.name, courseTitle, certificateNo).catch(
+            () => {}
+          );
+        }
+      })
+      .catch(() => {});
 
     return NextResponse.json({
       certificate

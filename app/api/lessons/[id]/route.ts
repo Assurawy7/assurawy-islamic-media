@@ -48,6 +48,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
         id: lesson.quiz.id,
         title: lesson.quiz.title,
         passingScore: lesson.quiz.passingScore,
+        timeLimitMinutes: lesson.quiz.timeLimitMinutes,
         questions: lesson.quiz.questions.map((q) => ({
           id: q.id,
           type: q.type,
@@ -69,6 +70,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
       id: lesson.id,
       title: lesson.title,
       videoUrl: lesson.videoUrl,
+      audioUrl: lesson.audioUrl,
       content: lesson.content,
       attachments: lesson.attachments,
       quiz,
@@ -85,10 +87,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const owned = await getOwnedCourseByLesson(params.id, session);
   if (!owned) return NextResponse.json({ error: "Lesson not found or not yours." }, { status: 404 });
 
-  const { title, videoUrl, content, order } = await req.json().catch(() => ({}));
+  const { title, videoUrl, audioUrl, content, order } = await req.json().catch(() => ({}));
   const updated = await prisma.lesson.update({
     where: { id: params.id },
-    data: { title, videoUrl, content, order },
+    data: { title, videoUrl, audioUrl, content, order },
   });
 
   return NextResponse.json({ lesson: updated });

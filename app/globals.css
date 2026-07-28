@@ -54,3 +54,77 @@ body {
 .font-arabic {
   font-family: var(--font-amiri), serif !important;
 }
+
+/* --- FOCUS RING ---
+   Used across ~20 components but was never actually defined anywhere in
+   the codebase — meaning every button/link/input relying on it had NO
+   visible focus indicator for keyboard users. Defined here once, globally,
+   using the site's gold accent so it reads as "on-brand" rather than a
+   generic browser outline. */
+.focus-ring {
+  outline: none;
+  transition: box-shadow 150ms ease, transform 150ms ease;
+}
+.focus-ring:focus-visible {
+  box-shadow: 0 0 0 2px #F8F3E7, 0 0 0 4px #C6A15B;
+}
+
+/* --- MOTION --- */
+@media (prefers-reduced-motion: no-preference) {
+  .animate-in {
+    animation-duration: 180ms;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    animation-fill-mode: both;
+  }
+  .fade-in {
+    animation-name: assurawy-fade-in;
+  }
+  .slide-in-from-top-1 {
+    animation-name: assurawy-slide-in-top;
+  }
+  .duration-150 {
+    animation-duration: 150ms;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-in {
+    animation: none !important;
+  }
+}
+
+@keyframes assurawy-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes assurawy-slide-in-top {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Smooth, gentle rise-in for cards/sections entering the viewport —
+   pair with the `.rise-in` class + a small IntersectionObserver hook,
+   or just apply directly for content that's present on first paint. */
+@keyframes assurawy-rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise-in {
+  animation: assurawy-rise-in 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Mobile: prevent horizontal scroll from any element that overflows the
+   viewport (a common side effect of fixed-width cards / long unbroken
+   strings, e.g. certificate numbers, emails). */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Slightly larger tap targets on touch devices for buttons/links that use
+   the site's compact `text-xs` sizing, without changing desktop layout. */
+@media (pointer: coarse) {
+  button, a[role="button"] {
+    min-height: 2.25rem;
+  }
+}

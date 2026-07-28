@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import QuizTimer from "@/components/QuizTimer";
+import { useLanguage } from "@/contexts/LanguageContext";
 export const dynamic = 'force-dynamic';
 type Question = {
   id: string;
@@ -11,18 +13,31 @@ type Question = {
   options?: string[] | null;
   points: number;
 };
-type Quiz = { id: string; title: string; passingScore: number; questions: Question[] };
+type Quiz = { id: string; title: string; passingScore: number; timeLimitMinutes?: number | null; questions: Question[] };
 type LessonData = {
   id: string;
   title: string;
   videoUrl?: string | null;
+  audioUrl?: string | null;
   content?: string | null;
   attachments: { id: string; fileName: string; fileUrl: string }[];
   quiz: Quiz | null;
 };
 
+type LeaderboardEntry = {
+  rank: number;
+  studentName: string;
+  percentage: number;
+  score: number;
+  maxScore: number;
+  timeTakenSeconds: number | null;
+  passed: boolean;
+  isMe: boolean;
+};
+
 export default function LessonPlayerPage() {
   const { id: courseId, lessonId } = useParams<{ id: string; lessonId: string }>();
+  const { t } = useLanguage();
 
   const [lesson, setLesson] = useState<LessonData | null>(null);
   const [courseTitle, setCourseTitle] = useState("");
@@ -32,13 +47,17 @@ export default function LessonPlayerPage() {
   const [flash, setFlash] = useState<string | null>(null);
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [quizStarted, setQuizStarted] = useState(false);
+  const elapsedRef = useRef(0);
   const [quizResult, setQuizResult] = useState<{
     score: number;
     maxScore: number;
     percentage: number;
     passed: boolean;
+    autoSubmitted?: boolean;
   } | null>(null);
   const [submittingQuiz, setSubmittingQuiz] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[] | null>(null);
 
   useEffect(() => {
     fetch(`/api/lessons/${lessonId}`)
@@ -72,14 +91,14 @@ export default function LessonPlayerPage() {
     setFlash(parts.join(" · ") || "Lesson marked complete.");
   }
 
-  async function submitQuiz() {
+  async function submitQuiz(auto = false) {
     if (!lesson?.quiz) return;
     setSubmittingQuiz(true);
     setError(null);
     const res = await fetch(`/api/quizzes/${lesson.quiz.id}/submit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ answers }),
+      body: JSON.stringify({ answers, timeTakenSeconds: elapsedRef.current, autoSubmitted: auto }),
     });
     const data = await res.json();
     setSubmittingQuiz(false);
@@ -91,6 +110,10 @@ export default function LessonPlayerPage() {
     if (data.gamification) {
       setFlash(`+${data.attempt.passed ? "points earned" : ""} ${data.gamification.currentStreak}-day streak`.trim());
     }
+    fetch(`/api/quizzes/${lesson.quiz.id}/leaderboard`)
+      .then((r) => r.json())
+      .then((d) => setLeaderboard(d.leaderboard ?? null))
+      .catch(() => {});
   }
 
   if (error && !lesson) {
@@ -117,6 +140,13 @@ export default function LessonPlayerPage() {
       {lesson.videoUrl && (
         <div className="mt-6 aspect-video overflow-hidden rounded-xl2 border border-deep/10 bg-black shadow-card">
           <video src={lesson.videoUrl} controls className="h-full w-full" />
+        </div>
+      )}
+
+      {lesson.audioUrl && (
+        <div className="mt-6 rounded-xl2 border border-deep/10 bg-white p-4 shadow-card">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gold">🎙️ Lesson Recording</p>
+          <audio src={lesson.audioUrl} controls className="w-full" preload="metadata" />
         </div>
       )}
 
@@ -165,34 +195,92 @@ export default function LessonPlayerPage() {
       {lesson.quiz && (
         <div className="mt-10 rounded-xl2 border border-deep/10 bg-white p-6 shadow-card">
           <h2 className="font-display text-lg font-semibold text-deep">{lesson.quiz.title}</h2>
-          <p className="mt-1 text-xs text-ink/50">Passing score: {lesson.quiz.passingScore}%</p>
+          <p className="mt-1 text-xs text-ink/50">
+            Passing score: {lesson.quiz.passingScore}%
+            {lesson.quiz.timeLimitMinutes ? ` · Time limit: ${lesson.quiz.timeLimitMinutes} min` : ""}
+          </p>
 
           {quizResult ? (
-            <div
-              className="mt-4 rounded-lg border p-4"
-              style={{ borderColor: quizResult.passed ? "#1C6B4F" : "#ef4444" }}
-            >
-              <p
-                className="text-sm font-semibold"
-                style={{ color: quizResult.passed ? "#1C6B4F" : "#ef4444" }}
+            <div className="mt-4 space-y-6">
+              <div
+                className="rounded-lg border p-4"
+                style={{ borderColor: quizResult.passed ? "#1C6B4F" : "#ef4444" }}
               >
-                {quizResult.passed ? "✓ Passed" : "✕ Not passed"} — {quizResult.score}/{quizResult.maxScore} (
-                {quizResult.percentage}%)
-              </p>
-              {!quizResult.passed && (
-                <button
-                  onClick={() => {
-                    setQuizResult(null);
-                    setAnswers({});
-                  }}
-                  className="focus-ring mt-3 text-xs font-semibold text-emerald hover:text-deep"
+                <p
+                  className="text-sm font-semibold"
+                  style={{ color: quizResult.passed ? "#1C6B4F" : "#ef4444" }}
                 >
-                  Try again →
-                </button>
+                  {quizResult.passed ? `✓ ${t("passed")}` : `✕ ${t("notPassed")}`} — {quizResult.score}/{quizResult.maxScore} (
+                  {quizResult.percentage}%)
+                </p>
+                {quizResult.autoSubmitted && (
+                  <p className="mt-1 text-xs font-medium text-amber-600">⏱️ {t("timeUp")}</p>
+                )}
+                {!quizResult.passed && (
+                  <button
+                    onClick={() => {
+                      setQuizResult(null);
+                      setAnswers({});
+                      setQuizStarted(false);
+                      elapsedRef.current = 0;
+                    }}
+                    className="focus-ring mt-3 text-xs font-semibold text-emerald hover:text-deep"
+                  >
+                    {t("tryAgain")} →
+                  </button>
+                )}
+              </div>
+
+              {leaderboard && leaderboard.length > 0 && (
+                <div>
+                  <h3 className="font-display text-sm font-semibold text-deep">🏆 {t("studentRanking")}</h3>
+                  <ol className="mt-2 space-y-1.5">
+                    {leaderboard.slice(0, 10).map((entry) => (
+                      <li
+                        key={entry.rank}
+                        className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${
+                          entry.isMe ? "bg-gold/10 font-semibold text-deep" : "text-ink/70"
+                        }`}
+                      >
+                        <span>
+                          #{entry.rank} {entry.studentName} {entry.isMe && "(You)"}
+                        </span>
+                        <span className="tabular-nums">
+                          {entry.percentage}%
+                          {entry.timeTakenSeconds != null && (
+                            <span className="ml-2 text-xs text-ink/40">
+                              {Math.floor(entry.timeTakenSeconds / 60)}m {entry.timeTakenSeconds % 60}s
+                            </span>
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
               )}
+            </div>
+          ) : !quizStarted && lesson.quiz.timeLimitMinutes ? (
+            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+              <p className="font-semibold">⏱️ This quiz is timed: {lesson.quiz.timeLimitMinutes} minutes.</p>
+              <p className="mt-1">Once you start, the countdown begins immediately and auto-submits your answers when it hits zero.</p>
+              <button
+                onClick={() => setQuizStarted(true)}
+                className="focus-ring mt-3 rounded-full bg-deep px-5 py-2 text-xs font-semibold text-white hover:bg-emerald"
+              >
+                {t("startQuiz")}
+              </button>
             </div>
           ) : (
             <div className="mt-4 space-y-5">
+              {lesson.quiz.timeLimitMinutes && (
+                <QuizTimer
+                  timeLimitMinutes={lesson.quiz.timeLimitMinutes}
+                  onTick={(s) => {
+                    elapsedRef.current = s;
+                  }}
+                  onExpire={() => submitQuiz(true)}
+                />
+              )}
               {lesson.quiz.questions.map((q, i) => (
                 <div key={q.id}>
                   <p className="text-sm font-medium text-ink/80">
@@ -225,11 +313,11 @@ export default function LessonPlayerPage() {
                 </div>
               ))}
               <button
-                onClick={submitQuiz}
+                onClick={() => submitQuiz(false)}
                 disabled={submittingQuiz}
                 className="focus-ring rounded-full bg-gold px-6 py-2.5 text-sm font-semibold text-deep hover:bg-goldLight disabled:opacity-60"
               >
-                {submittingQuiz ? "Submitting…" : "Submit Quiz"}
+                {submittingQuiz ? t("submitting") : t("submitQuiz")}
               </button>
             </div>
           )}

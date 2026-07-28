@@ -24,6 +24,8 @@ export async function GET() {
       maxScore: a.maxScore,
       percentage: a.percentage,
       passed: a.passed,
+      timeTakenSeconds: a.timeTakenSeconds,
+      autoSubmitted: a.autoSubmitted,
       submittedAt: a.submittedAt,
     })),
   });

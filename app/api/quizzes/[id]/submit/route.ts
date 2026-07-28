@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { awardPoints, recordLearningActivity, checkAndAwardBadges, POINTS } from "@/lib/gamification";
+import { notifyQuizResult } from "@/lib/whatsapp";
 export const dynamic = 'force-dynamic';
 type Answers = Record<string, string>;
 
@@ -13,6 +14,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const body = await req.json().catch(() => null);
   const answers: Answers = body?.answers ?? {};
+  const timeTakenSeconds: number | undefined =
+    typeof body?.timeTakenSeconds === "number" ? Math.max(0, Math.round(body.timeTakenSeconds)) : undefined;
+  const autoSubmitted: boolean = Boolean(body?.autoSubmitted);
 
   const quiz = await prisma.quiz.findUnique({
     where: { id: params.id },
@@ -52,6 +56,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       maxScore,
       percentage,
       passed,
+      timeTakenSeconds,
+      autoSubmitted,
     },
   });
 
@@ -64,6 +70,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     gamification = { points: user?.points ?? 0, currentStreak };
   }
 
+  // Fire-and-forget — never blocks or fails the response.
+  prisma.user
+    .findUnique({ where: { id: session.sub }, select: { name: true, phone: true, whatsappOptIn: true } })
+    .then((student) => {
+      if (student?.phone && student.whatsappOptIn) {
+        notifyQuizResult(student.phone, student.name, quiz.title, percentage, passed).catch(() => {});
+      }
+    })
+    .catch(() => {});
+
   return NextResponse.json({
     attempt: {
       id: attempt.id,
@@ -71,6 +87,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       maxScore,
       percentage,
       passed,
+      timeTakenSeconds,
+      autoSubmitted,
     },
     gamification,
   });

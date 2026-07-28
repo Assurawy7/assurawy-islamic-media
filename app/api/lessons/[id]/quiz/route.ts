@@ -41,7 +41,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     );
   }
 
-  const { title, passingScore, questions } = await req.json().catch(() => ({}));
+  const { title, passingScore, timeLimitMinutes, questions } = await req.json().catch(() => ({}));
   if (!title || !Array.isArray(questions) || questions.length === 0) {
     return NextResponse.json(
       { error: "title and at least one question are required." },
@@ -53,6 +53,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     data: {
       title,
       passingScore: passingScore ?? 60,
+      timeLimitMinutes: typeof timeLimitMinutes === "number" && timeLimitMinutes > 0 ? timeLimitMinutes : null,
       lessonId: params.id,
       questions: {
         create: (questions as QuestionInput[]).map((q, i) => ({

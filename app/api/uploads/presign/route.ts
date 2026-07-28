@@ -20,9 +20,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "fileName and contentType are required." }, { status: 400 });
   }
 
-  const allowed = ["application/pdf", "video/mp4", "video/webm"];
+  const allowed = [
+    "application/pdf",
+    "video/mp4",
+    "video/webm",
+    "audio/mpeg",
+    "audio/mp3",
+    "audio/wav",
+    "audio/x-wav",
+    "audio/ogg",
+    "audio/webm",
+    "audio/mp4",
+    "audio/x-m4a",
+    "audio/aac",
+  ];
   if (!allowed.includes(contentType)) {
-    return NextResponse.json({ error: "Only PDF, MP4, or WebM files are allowed." }, { status: 415 });
+    return NextResponse.json({ error: "Only PDF, MP4/WebM video, or audio files are allowed." }, { status: 415 });
   }
 
   const { uploadUrl, publicUrl } = await createPresignedUpload(fileName, contentType);

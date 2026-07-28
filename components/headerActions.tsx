@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default function HeaderActions() {
   const router = useRouter();
@@ -28,7 +29,7 @@ export default function HeaderActions() {
     // 2. Samo Logo URL daga DB Settings
     async function fetchSettings() {
       try {
-        const res = await fetch("/api/admin/settings");
+        const res = await fetch("/api/settings");
         if (res.ok) {
           const data = await res.json();
           if (data.logoUrl) setLogoUrl(data.logoUrl);
@@ -57,6 +58,7 @@ export default function HeaderActions() {
   if (isLoggedIn === null) {
     return (
       <div className="flex items-center gap-2">
+        <LanguageSwitcher />
         <div className="h-8 w-24 animate-pulse rounded-xl bg-slate-100" />
       </div>
     );
@@ -64,6 +66,7 @@ export default function HeaderActions() {
 
   return (
     <div className="flex items-center gap-3">
+      <LanguageSwitcher />
       {isLoggedIn ? (
         /* --- IDAN MUTUM YANA CIKI (LOGGED IN) --- */
         <div className="flex items-center gap-3">

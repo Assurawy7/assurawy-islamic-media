@@ -11,6 +11,7 @@ type Lesson = {
   title: string;
   order: number;
   videoUrl: string | null;
+  audioUrl: string | null;
   content: string | null;
   attachments: Attachment[];
   quiz: { id: string; title: string } | null;
@@ -25,6 +26,48 @@ type Course = {
   teacher: { name: string };
   modules: Module[];
 };
+
+/**
+ * Shared upload helper — prefers a direct-to-storage presigned upload
+ * (required for larger files, since serverless request bodies cap out
+ * around ~4.5MB) and falls back to the small-file local route when cloud
+ * storage isn't configured. Used for both attachments and lesson audio.
+ */
+async function uploadFileToStorage(file: File): Promise<{ fileName: string; fileUrl: string }> {
+  const presignRes = await fetch("/api/uploads/presign", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fileName: file.name, contentType: file.type }),
+  });
+
+  if (presignRes.ok) {
+    const { uploadUrl, publicUrl } = await presignRes.json();
+    const putRes = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+    if (!putRes.ok) throw new Error("Upload to cloud storage failed.");
+    return { fileName: file.name, fileUrl: publicUrl };
+  }
+
+  if (presignRes.status === 501) {
+    if (file.size > 50 * 1024 * 1024) {
+      throw new Error(
+        "This file is over 50MB and cloud storage isn't configured yet. Set the S3_* environment variables (see .env.example) to enable large uploads."
+      );
+    }
+    const form = new FormData();
+    form.append("file", file);
+    const uploadRes = await fetch("/api/uploads", { method: "POST", body: form });
+    const uploadData = await uploadRes.json().catch(() => ({}));
+    if (!uploadRes.ok) throw new Error(uploadData.error || "Upload failed.");
+    return { fileName: uploadData.fileName, fileUrl: uploadData.fileUrl };
+  }
+
+  const data = await presignRes.json().catch(() => ({}));
+  throw new Error(data.error || "Could not start upload.");
+}
 
 export default function CourseManagePage() {
   const { id } = useParams<{ id: string }>();
@@ -170,6 +213,7 @@ function ModuleCard({
 function LessonRow({ lesson: l, onChange }: { lesson: Lesson; onChange: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingAudio, setUploadingAudio] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   async function deleteLesson() {
@@ -185,49 +229,7 @@ function LessonRow({ lesson: l, onChange }: { lesson: Lesson; onChange: () => vo
     setUploadError(null);
 
     try {
-      // Prefer a direct-to-storage presigned upload — required for video
-      // files, since Vercel serverless functions cap request bodies at
-      // ~4.5MB and this route would otherwise fail long before our own
-      // 50MB check ever runs. Falls back to the small-file route only when
-      // cloud storage isn't configured (local dev / self-hosted).
-      const presignRes = await fetch("/api/uploads/presign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileName: file.name, contentType: file.type }),
-      });
-
-      let fileName = file.name;
-      let fileUrl: string;
-
-      if (presignRes.ok) {
-        const { uploadUrl, publicUrl } = await presignRes.json();
-        const putRes = await fetch(uploadUrl, {
-          method: "PUT",
-          headers: { "Content-Type": file.type },
-          body: file,
-        });
-        if (!putRes.ok) throw new Error("Upload to cloud storage failed.");
-        fileUrl = publicUrl;
-      } else if (presignRes.status === 501) {
-        // Cloud storage isn't configured — fall back to the local-disk route.
-        // Only safe for files under its 50MB limit.
-        if (file.size > 50 * 1024 * 1024) {
-          throw new Error(
-            "This file is over 50MB and cloud storage isn't configured yet. Set the S3_* environment variables (see .env.example) to enable large video uploads."
-          );
-        }
-        const form = new FormData();
-        form.append("file", file);
-        const uploadRes = await fetch("/api/uploads", { method: "POST", body: form });
-        const uploadData = await uploadRes.json().catch(() => ({}));
-        if (!uploadRes.ok) throw new Error(uploadData.error || "Upload failed.");
-        fileName = uploadData.fileName;
-        fileUrl = uploadData.fileUrl;
-      } else {
-        const data = await presignRes.json().catch(() => ({}));
-        throw new Error(data.error || "Could not start upload.");
-      }
-
+      const { fileName, fileUrl } = await uploadFileToStorage(file);
       await fetch(`/api/lessons/${l.id}/attachments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -240,6 +242,37 @@ function LessonRow({ lesson: l, onChange }: { lesson: Lesson; onChange: () => vo
       e.target.value = "";
       onChange();
     }
+  }
+
+  async function handleAudioUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingAudio(true);
+    setUploadError(null);
+
+    try {
+      const { fileUrl } = await uploadFileToStorage(file);
+      await fetch(`/api/lessons/${l.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ audioUrl: fileUrl }),
+      });
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Audio upload failed.");
+    } finally {
+      setUploadingAudio(false);
+      e.target.value = "";
+      onChange();
+    }
+  }
+
+  async function removeAudio() {
+    await fetch(`/api/lessons/${l.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ audioUrl: null }),
+    });
+    onChange();
   }
 
   async function removeAttachment(attId: string) {
@@ -259,6 +292,7 @@ function LessonRow({ lesson: l, onChange }: { lesson: Lesson; onChange: () => vo
         </button>
         <div className="flex flex-wrap items-center gap-2">
           {l.videoUrl && <Badge tone="emerald">Video</Badge>}
+          {l.audioUrl && <Badge tone="emerald">🎙️ Audio</Badge>}
           {l.attachments.length > 0 && <Badge tone="gold">{l.attachments.length} PDF</Badge>}
           {l.quiz ? (
             <Link
@@ -292,6 +326,34 @@ function LessonRow({ lesson: l, onChange }: { lesson: Lesson; onChange: () => vo
               Video: <span className="font-mono">{l.videoUrl}</span>
             </p>
           )}
+
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-deep">
+              🎙️ Lesson Audio (recitation / lecture recording)
+            </p>
+            {l.audioUrl ? (
+              <div className="flex items-center gap-3">
+                <audio src={l.audioUrl} controls className="h-9 flex-1" preload="metadata" />
+                <button
+                  onClick={removeAudio}
+                  className="focus-ring shrink-0 text-xs font-semibold text-red-500 hover:text-red-700"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <label className="focus-ring inline-flex cursor-pointer items-center gap-2 rounded-full border border-deep/15 px-3 py-1.5 text-xs font-semibold text-deep hover:border-gold">
+                {uploadingAudio ? "Uploading…" : "＋ Upload audio recording"}
+                <input
+                  type="file"
+                  accept="audio/*"
+                  className="hidden"
+                  disabled={uploadingAudio}
+                  onChange={handleAudioUpload}
+                />
+              </label>
+            )}
+          </div>
 
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-deep">

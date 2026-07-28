@@ -29,7 +29,13 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     : quiz.questions.map(({ correctAnswer, ...q }) => q);
 
   return NextResponse.json({
-    quiz: { id: quiz.id, title: quiz.title, passingScore: quiz.passingScore, questions },
+    quiz: {
+      id: quiz.id,
+      title: quiz.title,
+      passingScore: quiz.passingScore,
+      timeLimitMinutes: quiz.timeLimitMinutes,
+      questions,
+    },
   });
 }
 
@@ -57,7 +63,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     (session.role === "TEACHER" && quiz.lesson.module.course.teacherId === session.sub);
   if (!isOwner) return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 
-  const { title, passingScore, questions } = await req.json().catch(() => ({}));
+  const { title, passingScore, timeLimitMinutes, questions } = await req.json().catch(() => ({}));
 
   // Simplest reliable approach for a quiz builder: replace all questions on save.
   const updated = await prisma.$transaction(async (tx) => {
@@ -80,6 +86,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       data: {
         title: title ?? undefined,
         passingScore: passingScore ?? undefined,
+        timeLimitMinutes:
+          timeLimitMinutes === null
+            ? null
+            : typeof timeLimitMinutes === "number"
+              ? timeLimitMinutes
+              : undefined,
       },
       include: { questions: { orderBy: { order: "asc" } } },
     });

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/session";
 
+export const dynamic = "force-dynamic";
 
 type Context = {
   params: {
@@ -14,6 +16,11 @@ export async function GET(
   req: NextRequest,
   context: Context
 ) {
+  const session = await requireRole(["ADMIN"]);
+  if (!session) {
+    return NextResponse.json({ error: "Not authorized." }, { status: 401 });
+  }
+
   try {
 
     const { id } = context.params;
@@ -73,6 +80,10 @@ export async function DELETE(
   req: NextRequest,
   context: Context
 ){
+  const session = await requireRole(["ADMIN"]);
+  if (!session) {
+    return NextResponse.json({ error: "Not authorized." }, { status: 401 });
+  }
 
   try{
 

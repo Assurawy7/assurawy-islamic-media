@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
-import { User, Settings, LogOut } from "lucide-react";
+import { User, Settings, LogOut, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function DashboardUserMenu({
@@ -62,6 +62,15 @@ export default function DashboardUserMenu({
           >
             <User className="w-4 h-4 text-emerald-600" />
             <span>Profile Page</span>
+          </Link>
+
+          <Link
+            href="/dashboard/leaderboard"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-slate-100 transition"
+          >
+            <Trophy className="w-4 h-4 text-emerald-600" />
+            <span>Leaderboard</span>
           </Link>
 
           <Link

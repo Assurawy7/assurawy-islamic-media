@@ -94,3 +94,40 @@ export async function notifyCertificateIssued(
 export async function notifyPaymentSuccess(phone: string, studentName: string, courseTitle: string) {
   await sendTemplate(phone, "payment_success", [studentName, courseTitle]).catch(() => {});
 }
+
+/** Quiz result — pass/fail with percentage. Requires a "quiz_result" template approved in Meta Business Manager. */
+export async function notifyQuizResult(
+  phone: string,
+  studentName: string,
+  quizTitle: string,
+  percentage: number,
+  passed: boolean
+) {
+  await sendTemplate(phone, "quiz_result", [
+    studentName,
+    quizTitle,
+    `${percentage}%`,
+    passed ? "PASSED" : "NOT PASSED",
+  ]).catch(() => {});
+}
+
+/** New lesson published in a course the student is enrolled in. Requires a "new_lesson" template. */
+export async function notifyNewLesson(phone: string, studentName: string, courseTitle: string, lessonTitle: string) {
+  await sendTemplate(phone, "new_lesson", [studentName, courseTitle, lessonTitle]).catch(() => {});
+}
+
+/** New assignment posted in a course the student is enrolled in. Requires a "new_assignment" template. */
+export async function notifyNewAssignment(
+  phone: string,
+  studentName: string,
+  courseTitle: string,
+  assignmentTitle: string,
+  dueDate: string | null
+) {
+  await sendTemplate(phone, "new_assignment", [
+    studentName,
+    courseTitle,
+    assignmentTitle,
+    dueDate ?? "No due date",
+  ]).catch(() => {});
+}

@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/session";
 
+export const dynamic = "force-dynamic";
 
 // GET COURSES
 export async function GET(req: NextRequest) {
+  const session = await requireRole(["ADMIN"]);
+  if (!session) {
+    return NextResponse.json({ error: "Not authorized." }, { status: 401 });
+  }
+
   try {
 
     const courses = await prisma.course.findMany({
@@ -54,6 +61,10 @@ export async function GET(req: NextRequest) {
 
 // CREATE COURSE
 export async function POST(req: NextRequest){
+  const session = await requireRole(["ADMIN"]);
+  if (!session) {
+    return NextResponse.json({ error: "Not authorized." }, { status: 401 });
+  }
 
   try{
 
